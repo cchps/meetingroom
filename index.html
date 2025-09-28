@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSPSD Meeting Room Dashboard</title>
+    <style>
+        :root {
+            --primary-500: #3b82f6; --primary-600: #2563eb; --primary-700: #1d4ed8;
+            --secondary-500: #64748b;
+            --success-500: #10b981; --danger-500: #ef4444; --warning-500: #f59e0b;
+            --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0; --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b; --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+            --room1: #3b82f6; --room1-light: #dbeafe; --room1-dark: #1d4ed8;
+            --room2: #f97316; --room2-light: #fed7aa; --room2-dark: #c2410c;
+            --border-radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,.05);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+            --header-gradient: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+            --slot-height: 60px;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes highlight { 0% { background-color: transparent; } 50% { background-color: rgba(59, 130, 246, 0.1); } 100% { background-color: transparent; } }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-100); color: var(--gray-700); font-size: 15px; line-height: 1.5; }
+        
+        .header { background: var(--header-gradient); padding: 1rem 0; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+        .header-content { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .logo { display: flex; align-items: center; gap: .75rem; }
+        .logo-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; }
+        .logo h1 { font-size: 1.6rem; }
+        .logo-subtitle { font-size: 0.8rem; opacity: 0.8; margin-top: -0.25rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .live-clock { font-weight: 500; background: rgba(255,255,255,0.1); padding: .5rem 1rem; border-radius: var(--border-radius); font-size: .9rem; }
+        .auth-btn { background: white; border: none; color: var(--primary-600); padding: .6rem 1.2rem; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; transition: all .2s; box-shadow: var(--shadow-sm); }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        
+        .nav-tabs { background: white; box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--gray-200); }
+        .nav-tabs-content { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; }
+        .nav-tab { padding: 1rem 1.5rem; color: var(--gray-400); border-bottom: 3px solid transparent; transition: all .2s; font-weight: 600; cursor: pointer; position: relative; }
+        .nav-tab.active, .nav-tab:hover { color: var(--primary-500); border-bottom-color: var(--primary-500); }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .view { animation: fadeIn 0.5s ease-out; }
+        .card { background: white; border-radius: var(--border-radius); box-shadow: var(--shadow); border: 1px solid var(--gray-200); margin-bottom: 1.5rem; transition: all .2s ease-in-out; }
+        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid var(--gray-200); }
+        .card-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { position: relative; padding: 1.5rem; overflow: hidden; }
+        .stat-icon { position: absolute; right: 1rem; top: 1rem; color: var(--primary-500); opacity: 0.1; font-size: 4rem; }
+        .stat-title { font-size: .9rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--gray-900); margin-top: 0.5rem; }
+        
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .room-card { padding: 1.5rem; position: relative; overflow: hidden; }
+        .room-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary-500), var(--primary-700)); }
+        .room-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .room-info-section { flex: 1; }
+        .room-name { font-size: 1.2rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.25rem; }
+        .room-subtitle { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 0.5rem; }
+        .room-capacity { font-size: .8rem; color: var(--gray-400); display: flex; align-items: center; gap: 0.25rem; }
+        .room-status-section { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+        .room-status-indicator { width: 12px; height: 12px; border-radius: 50%; }
+        .status-available .room-status-indicator { background: var(--success-500); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+        .status-occupied .room-status-indicator { background: var(--danger-500); animation: pulse 2s infinite; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+        .status-upcoming .room-status-indicator { background: var(--warning-500); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+        .room-info { font-size: .9rem; color: var(--gray-500); margin-bottom: 1rem; line-height: 1.6; }
+        
+        .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1.2rem; border: none; border-radius: var(--border-radius); font-size: .9rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all .2s; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+        .btn-primary { background: var(--primary-500); color: white; }
+        .btn-primary:hover { background: var(--primary-600); transform: translateY(-2px); }
+        .btn-danger { background: var(--danger-500); color: white; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+        .btn-sm { padding: .4rem .8rem; font-size: .8rem; }
+        .btn:disabled { background: var(--gray-200); cursor: not-allowed; transform: none; }
+        
+        /* Role-based visibility */
+        .admin-only { display: none !important; }
+        .viewer-only { display: block; }
+        .admin-user .admin-only { display: block !important; }
+        .admin-user .viewer-only { display: none; }
+        
+        /* Enhanced Calendar System */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
+        .calendar-controls { display: flex; gap: 0.75rem; align-items: center; }
+        .calendar-view-selector { display: flex; background: var(--gray-100); border-radius: var(--border-radius); padding: 0.25rem; margin-left: 1rem; }
+        .calendar-view-btn { padding: 0.6rem 1.2rem; background: transparent; border: none; border-radius: calc(var(--border-radius) - 2px); cursor: pointer; font-weight: 600; transition: all 0.2s; color: var(--gray-600); }
+        .calendar-view-btn.active { background: var(--primary-500); color: white; box-shadow: var(--shadow-sm); }
+        .calendar-view-btn:hover:not(.active) { background: var(--gray-200); }
+        
+        .calendar-container { background: white; border-radius: var(--border-radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 2rem; }
+        .calendar-wrapper { position: relative; overflow: auto; max-height: 80vh; }
+        
+        /* Today View */
+        .today-view { display: grid; grid-template-columns: 100px 1fr; }
+        .today-header { grid-column: 1 / -1; background: var(--gray-50); padding: 1rem; border-bottom: 2px solid var(--gray-200); text-align: center; font-weight: 700; font-size: 1.1rem; color: var(--gray-800); }
+        
+        /* Weekly View */
+        .weekly-view { display: grid; grid-template-columns: 100px repeat(7, 1fr); min-width: 1000px; }
+        .day-header { text-align: center; padding: 1rem 0.5rem; background: var(--gray-50); border-bottom: 2px solid var(--gray-200); border-right: 1px solid var(--gray-200); transition: all 0.2s; }
+        .day-header:hover { background: var(--gray-100); }
+        .day-header-day { font-size: .8rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+        .day-header-date { font-size: 1.4rem; color: var(--gray-700); margin-top: 0.25rem; font-weight: 700; }
+        .day-header.today { background: linear-gradient(135deg, var(--primary-500), var(--primary-600)); color: white; }
+        .day-header.today .day-header-day { color: rgba(255,255,255,0.8); }
+        .day-header.today .day-header-date { color: white; }
+        
+        /* Monthly View */
+        .monthly-view { display: grid; grid-template-columns: repeat(7, 1fr); }
+        .month-day-header { text-align: center; padding: 1rem; background: var(--gray-100); border: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-700); }
+        .month-day { min-height: 120px; border: 1px solid var(--gray-200); padding: 0.5rem; background: white; position: relative; transition: all 0.2s; }
+        .month-day:hover { background: var(--gray-50); }
+        .month-day.other-month { background: var(--gray-50); color: var(--gray-400); }
+        .month-day.today { background: linear-gradient(135deg, var(--primary-50), var(--primary-100)); border-color: var(--primary-300); }
+        .month-day-number { font-weight: 700; margin-bottom: 0.5rem; }
+        .month-day.today .month-day-number { color: var(--primary-700); }
+        .month-booking { background: var(--primary-100); color: var(--primary-800); padding: 0.25rem; margin: 0.125rem 0; border-radius: 4px; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .month-booking.room1 { background: var(--room1-light); color: var(--room1-dark); }
+        .month-booking.room2 { background: var(--room2-light); color: var(--room2-dark); }
+        
+        /* Admin-only cursor for month bookings */
+        .admin-user .month-booking { cursor: pointer; }
+        .admin-user .month-booking:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        
+        /* Time Slots */
+        .time-header { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); border-right: 2px solid var(--gray-200); position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--gray-600); font-size: 0.9rem; }
+        .time-slot { height: var(--slot-height); text-align: center; padding: 0.5rem 0.25rem; font-size: .8rem; font-weight: 600; color: var(--gray-500); border-right: 2px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); display: flex; align-items: center; justify-content: center; position: sticky; left: 0; z-index: 5; }
+        .time-slot.hour-mark { border-bottom: 2px solid var(--gray-300); background: var(--gray-100); }
+        
+        /* Day Columns and Cells */
+        .day-column { position: relative; border-right: 1px solid var(--gray-200); min-height: var(--slot-height); }
+        .time-cell { height: var(--slot-height); border-bottom: 1px solid var(--gray-200); position: relative; transition: all 0.2s; background: white; }
+        .time-cell.hour-mark { border-bottom: 2px solid var(--gray-300); }
+        .time-cell.off-day { background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 8px, #f1f5f9 8px, #f1f5f9 16px); }
+        
+        /* Admin-only interactive time cells */
+        .admin-user .time-cell.selectable { cursor: pointer; }
+        .admin-user .time-cell.selectable:hover { background: rgba(59, 130, 246, 0.05); }
+        .admin-user .time-cell.selected { background: rgba(59, 130, 246, 0.1); border: 2px solid var(--primary-500); }
+        
+        /* Enhanced Booking Blocks */
+        .booking-block { position: absolute; left: 4px; right: 4px; padding: 0.5rem; border-radius: 6px; overflow: hidden; z-index: 10; transition: all .2s ease; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); box-shadow: var(--shadow-sm); }
+        
+        /* Admin-only interactive booking blocks */
+        .admin-user .booking-block { cursor: pointer; }
+        .admin-user .booking-block:hover { transform: translateX(2px) translateY(-1px); box-shadow: var(--shadow-lg); z-index: 15; }
+        
+        .booking-block.room1 { background: linear-gradient(135deg, var(--room1-light) 0%, rgba(255,255,255,0.95) 100%); border-left: 4px solid var(--room1); color: var(--room1-dark); }
+        .booking-block.room2 { background: linear-gradient(135deg, var(--room2-light) 0%, rgba(255,255,255,0.95) 100%); border-left: 4px solid var(--room2); color: var(--room2-dark); }
+        .booking-subject { font-weight: 700; font-size: .85rem; margin-bottom: 0.25rem; line-height: 1.2; }
+        .booking-organizer { font-size: .75rem; opacity: .8; }
+        .booking-time { font-size: .7rem; opacity: .7; margin-top: 0.25rem; }
+        .booking-room { font-size: .7rem; opacity: .7; margin-top: 0.25rem; font-weight: 600; }
+        .booking-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.1); }
+        .booking-progress-bar { height: 100%; background: var(--success-500); transition: width 1s ease; border-radius: 0 0 6px 6px; }
+        
+        /* Current Time Indicator */
+        .current-time-indicator { position: absolute; left: 100px; right: 0; height: 2px; background: linear-gradient(90deg, var(--danger-500), #ff6b6b); z-index: 20; transition: top 1s ease; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+        .current-time-indicator::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: var(--danger-500); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+        
+        /* Permission message for viewers */
+        .permission-message { background: var(--gray-50); border: 2px dashed var(--gray-300); border-radius: var(--border-radius); padding: 2rem; text-align: center; color: var(--gray-500); margin: 1rem 0; }
+        .permission-message-icon { font-size: 3rem; margin-bottom: 1rem; }
+        
+        .table { width: 100%; border-collapse: collapse; } 
+        .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--gray-200); }
+        .table th { background: var(--gray-100); font-weight: 600; position: sticky; top: 0; }
+        .table tbody tr:hover { background: var(--gray-50); }
+        
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all .3s; backdrop-filter: blur(4px); }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-content { background: white; border-radius: var(--border-radius); max-width: 600px; width: 90%; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-200); }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-400); padding: 0.5rem; border-radius: 50%; transition: all 0.2s; }
+        .modal-close:hover { background: var(--gray-100); color: var(--gray-600); }
+        .modal-body { padding: 2rem; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .5rem; color: var(--gray-700); }
+        .form-input, .form-select { width: 100%; padding: .75rem; border: 1px solid var(--gray-200); border-radius: var(--border-radius); font-size: .9rem; transition: all 0.2s; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary-500); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        .hidden { display: none !important; }
+        
+        .loader { text-align: center; padding: 3rem; font-weight: 500; color: var(--gray-400); }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; margin-right: 8px; }
+        
+        .notification { position: fixed; bottom: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: var(--border-radius); color: white; font-weight: 600; z-index: 2000; box-shadow: var(--shadow-lg); transform: translateY(120%); transition: transform 0.4s ease-in-out; min-width: 300px; }
+        .notification.show { transform: translateY(0); }
+        .notification.success { background: linear-gradient(135deg, var(--success-500), #059669); }
+        .notification.error { background: linear-gradient(135deg, var(--danger-500), #dc2626); }
+        .notification.warning { background: linear-gradient(135deg, var(--warning-500), #d97706); }
+        
+        .connection-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; padding: 0.5rem 1rem; border-radius: var(--border-radius); background: rgba(255,255,255,0.1); }
+        .connection-status.online { color: #10b981; } 
+        .connection-status.offline { color: #ef4444; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot.online { background: #10b981; animation: pulse 2s infinite; } 
+        .status-dot.offline { background: #ef4444; }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .weekly-view { grid-template-columns: 80px repeat(7, 1fr); min-width: 800px; }
+            .time-slot { font-size: 0.7rem; padding: 0.25rem; }
+            .day-header { padding: 0.75rem 0.25rem; }
+            .day-header-date { font-size: 1.2rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .room-grid { grid-template-columns: 1fr; }
+            .calendar-header { flex-direction: column; align-items: stretch; }
+            .calendar-view-selector { margin-left: 0; margin-top: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">HSPSD</div>
+                <div>
+                    <h1>Meeting Room Dashboard</h1>
+                    <div class="logo-subtitle">Health Systems and Population Studies Division</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="connection-status online">
+                    <div class="status-dot online"></div>
+                    <span id="connectionStatus">Connected</span>
+                </div>
+                <div id="liveClock" class="live-clock"></div>
+                <div class="user-info" style="display:flex; align-items:center; gap:0.75rem;">
+                    <span id="userRole">Viewer</span>
+                    <button id="authBtn" class="auth-btn">Admin Login</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="nav-tabs-content">
+            <div class="nav-tab active" data-view="dashboard">📊 Dashboard</div>
+            <div class="nav-tab" data-view="calendar">📅 Calendar</div>
+            <div class="nav-tab admin-only" data-view="bookings">⚙️ Manage Bookings</div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Dashboard View - Available to All Users -->
+        <div id="dashboardView" class="view">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-title">Today's Bookings</div>
+                    <div class="stat-value" id="todayBookings">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡️</div>
+                    <div class="stat-title">System Status</div>
+                    <div class="stat-value" id="systemStatus" style="color: var(--success-500);">Live</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏰</div>
+                    <div class="stat-title">Current Time</div>
+                    <div class="stat-value" id="currentTimeDisplay">--:--</div>
+                </div>
+            </div>
+            
+            <h2 class="card-title" style="margin-bottom: 1rem; font-size: 1.5rem;">🏢 HSPSD Meeting Rooms Status</h2>
+            <div id="roomGrid" class="room-grid"><div class="loader">Loading Room Status...</div></div>
+            
+            <!-- Viewer Permission Message -->
+            <div class="permission-message viewer-only">
+                <div class="permission-message-icon">👁️</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--gray-700);">Viewer Mode</h3>
+                <p>You have read-only access to view meeting schedules and room status. To create, edit, or delete bookings, please contact an administrator.</p>
+            </div>
+        </div>
+
+        <!-- Calendar View - Read-only for Viewers, Interactive for Admins -->
+        <div id="calendarView" class="view hidden">
+            <div class="calendar-header">
+                <div class="calendar-controls">
+                    <button class="btn" id="prevBtn">← Previous</button>
+                    <button class="btn btn-primary" id="todayBtn">Today</button>
+                    <button class="btn" id="nextBtn">Next →</button>
+                    <div class="calendar-view-selector">
+                        <button class="calendar-view-btn" data-view="today">Today</button>
+                        <button class="calendar-view-btn active" data-view="week">Week</button>
+                        <button class="calendar-view-btn" data-view="month">Month</button>
+                    </div>
+                </div>
+                <h2 id="calendarTitle" style="color: var(--gray-900); font-size: 1.8rem;"></h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <!-- Only show to admin -->
+                    <button class="btn btn-primary admin-only" id="newCalendarBookingBtn">➕ New Booking</button>
+                    <!-- Show permission info to viewers -->
+                    <div class="viewer-only" style="background: var(--warning-500); color: white; padding: 0.5rem 1rem; border-radius: var(--border-radius); font-size: 0.8rem;">
+                        👁️ Read-Only Mode
+                    </div>
+                </div>
+            </div>
+            
+            <div class="calendar-container">
+                <div class="calendar-wrapper">
+                    <div id="currentTimeIndicator" class="current-time-indicator"></div>
+                    <div id="calendar" class="calendar-grid">
+                        <div class="loader">Loading Calendar...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Viewer instruction message -->
+            <div class="permission-message viewer-only">
+                <div class="permission-message-icon">📅</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--gray-700);">Calendar View</h3>
+                <p>You can view all meeting schedules and room availability. Only administrators can create, modify, or delete bookings.</p>
+            </div>
+        </div>
+
+        <!-- Bookings Management View - Admin Only -->
+        <div id="bookingsView" class="view hidden admin-only">
+            <div class="card">
+                <div class="card-header">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 class="card-title">📋 HSPSD Bookings Management</h2>
+                        <button class="btn btn-primary" id="newBookingBtn">➕ New Booking</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="overflow-x: auto;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Room</th>
+                                    <th>Date & Time</th>
+                                    <th>Organizer</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsTable">
+                                <tr><td colspan="6" class="loader">Loading Bookings...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Only Modals -->
+    <div id="bookingModal" class="modal admin-only">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="bookingModalTitle">New Booking</h2>
+                <button class="modal-close" id="closeBookingModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="bookingForm">
+                    <input type="hidden" id="bookingId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Meeting Room*</label>
+                            <select id="bookingRoom" class="form-select" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date*</label>
+                            <input type="date" id="bookingDate" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Start Time*</label>
+                            <input type="time" id="bookingStart" class="form-input" step="1800" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Time*</label>
+                            <input type="time" id="bookingEnd" class="form-input" step="1800" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Meeting Subject*</label>
+                            <input type="text" id="bookingSubject" class="form-input" placeholder="Enter meeting subject..." required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Organizer</label>
+                            <select id="bookingOrganizer" class="form-select"></select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn btn-primary" id="bookingSubmitBtn">Create Booking</button>
+                        <button type="button" class="btn" id="cancelBookingBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🔐 HSPSD Admin Login</h2>
+                <button class="modal-close" id="closeLoginModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="loginUsername" class="form-input" required value="cchps@icddrb" placeholder="Enter admin username">
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" required value="987654321" placeholder="Enter admin password">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;" id="loginSubmitBtn">
+                        <span id="loginBtnText">Login as Admin</span>
+                    </button>
+                    <div style="margin-top: 1rem; text-align: center; font-size: 0.8rem; color: var(--gray-500);">
+                        Only HSPSD administrators can create and manage bookings
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            onSnapshot, 
+            addDoc, 
+            doc, 
+            setDoc, 
+            deleteDoc, 
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD96pp9lAEoraj4XFJZj7PR52pXZlJYlcI",
+            authDomain: "meetingroomdashboard-b7eba.firebaseapp.com",
+            projectId: "meetingroomdashboard-b7eba",
+            storageBucket: "meetingroomdashboard-b7eba.appspot.com",
+            messagingSenderId: "228783242839",
+            appId: "1:228783242839:web:afa2c6bc443d3f91c1ad12",
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // App state
+        let currentUser = { role: 'viewer' }; // Default to viewer
+        let allBookings = []; 
+        let calendarViewDate = new Date();
+        let calendarViewMode = 'week';
+        let bookingsUnsubscribe = null;
+        let isOnline = true;
+        
+        // App configuration
+        const officeConfig = { startTime: '08:30', endTime: '17:00' };
+        
+        // Updated HSPSD Meeting Rooms
+        const rooms = [
+            { 
+                id: 1, 
+                name: 'Meeting Room 1 (HSPSD)', 
+                shortName: 'Meeting Room 1',
+                color: 'room1', 
+                capacity: 14,
+                description: 'Main conference room for larger meetings and presentations'
+            }, 
+            { 
+                id: 2, 
+                name: 'Mini Meeting Room (HSPSD)', 
+                shortName: 'Mini Meeting Room',
+                color: 'room2', 
+                capacity: 8,
+                description: 'Compact room for smaller team meetings and discussions'
+            }
+        ];
+        
+        const users = ['Nadira', 'Admin', 'Dr. Ahmed', 'Sarah Khan', 'Dr. Rahman', 'HSPSD Team', 'Guest'];
+
+        // Utility functions
+        const getById = id => document.getElementById(id);
+        const formatDate = dateObj => dateObj.toISOString().split('T')[0];
+        const formatTime = timeStr => {
+            const [hours, minutes] = timeStr.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        };
+        
+        // Time utilities
+        function parseTime(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+        
+        function formatTimeFromMinutes(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        }
+        
+        function isWorkingDay(date) {
+            return ![5, 6].includes(date.getDay()); // 5 = Friday, 6 = Saturday
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const el = document.createElement('div');
+            el.className = `notification ${type}`;
+            el.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span>${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌'}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(el);
+            setTimeout(() => el.classList.add('show'), 10);
+            setTimeout(() => {
+                el.classList.remove('show');
+                setTimeout(() => el.remove(), 500);
+            }, 4000);
+        }
+
+        // Check user permissions
+        function checkPermission(action) {
+            if (currentUser.role !== 'admin') {
+                showNotification('🔒 Admin access required to ' + action, 'warning');
+                return false;
+            }
+            return true;
+        }
+
+        // Update all views
+        function renderAllViews() {
+            renderDashboard();
+            renderCalendar();
+            if (currentUser.role === 'admin') {
+                renderBookingsTable();
+            }
+        }
+
+        // Show selected view with permission check
+        function showView(viewName) {
+            if (viewName === 'bookings' && currentUser.role !== 'admin') {
+                showNotification('🔒 Admin access required to manage bookings.', 'warning');
+                return;
+            }
+            
+            document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.id !== `${viewName}View`));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.view === viewName));
+            
+            if (viewName === 'calendar') {
+                setTimeout(renderCalendar, 100);
+            }
+        }
+
+        // Render dashboard (available to all users)
+        function renderDashboard() {
+            const today = formatDate(new Date());
+            const todayBookingsCount = allBookings.filter(b => b.date === today).length;
+            getById('todayBookings').textContent = todayBookingsCount;
+            
+            const systemStatus = getById('systemStatus');
+            systemStatus.textContent = isOnline ? 'Live' : 'Offline';
+            systemStatus.style.color = isOnline ? 'var(--success-500)' : 'var(--danger-500)';
+            
+            getById('roomGrid').innerHTML = rooms.map(room => {
+                const now = new Date();
+                const currentTime = now.toTimeString().slice(0, 5);
+                const currentDate = formatDate(now);
+                
+                const currentBooking = allBookings.find(b => 
+                    b.roomId === room.id && 
+                    b.date === currentDate && 
+                    b.startTime <= currentTime && 
+                    b.endTime > currentTime
+                );
+                
+                const nextBooking = allBookings
+                    .filter(b => 
+                        b.roomId === room.id && 
+                        b.date === currentDate && 
+                        b.startTime > currentTime
+                    )
+                    .sort((a,b) => a.startTime.localeCompare(b.startTime))[0];
+                
+                let status, statusClass, info;
+                
+                if (currentBooking) { 
+                    status = 'Occupied'; 
+                    statusClass = 'status-occupied'; 
+                    info = `<strong>🔴 ${currentBooking.subject}</strong><br>
+                           ⏰ Until ${formatTime(currentBooking.endTime)}`;
+                    if (currentBooking.organizer) {
+                        info += `<br>👤 ${currentBooking.organizer}`;
+                    }
+                } else if (nextBooking) { 
+                    status = 'Available'; 
+                    statusClass = 'status-upcoming'; 
+                    info = `<strong>🟡 Next: ${nextBooking.subject}</strong><br>
+                           ⏰ Starts ${formatTime(nextBooking.startTime)}`;
+                    if (nextBooking.organizer) {
+                        info += `<br>👤 ${nextBooking.organizer}`;
+                    }
+                } else { 
+                    status = 'Available'; 
+                    statusClass = 'status-available';
+                    info = '🟢 <strong>Free for the rest of the day</strong>';
+                }
+                
+                return `<div class="card room-card ${statusClass}">
+                    <div class="room-header">
+                        <div class="room-info-section">
+                            <div class="room-name">${room.name}</div>
+                            <div class="room-subtitle">${room.description}</div>
+                            <div class="room-capacity">👥 ${room.capacity} people capacity</div>
+                        </div>
+                        <div class="room-status-section">
+                            <div class="room-status-indicator"></div>
+                            <span style="color: ${statusClass === 'status-available' ? 'var(--success-500)' : statusClass === 'status-occupied' ? 'var(--danger-500)' : 'var(--warning-500)'};">${status}</span>
+                        </div>
+                    </div>
+                    <div class="room-info">${info}</div>
+                    ${currentUser.role === 'admin' ? 
+                        `<div style="margin-top: 1rem;">
+                            <button class="btn btn-sm btn-primary" onclick="window.quickBookRoom(${room.id})">
+                                📅 Quick Book
+                            </button>
+                        </div>` : 
+                        `<div style="margin-top: 1rem; padding: 0.5rem; background: var(--gray-50); border-radius: 6px; font-size: 0.8rem; color: var(--gray-500);">
+                            👁️ View only - Admin required to book
+                        </div>`
+                    }
+                </div>`;
+            }).join('');
+        }
+        
+        // Main calendar rendering function (read-only for viewers)
+        function renderCalendar() {
+            updateCalendarTitle();
+            
+            switch (calendarViewMode) {
+                case 'today':
+                    renderTodayView();
+                    break;
+                case 'week':
+                    renderWeekView();
+                    break;
+                case 'month':
+                    renderMonthView();
+                    break;
+            }
+            
+            setTimeout(updateCurrentTimeIndicator, 100);
+        }
+        
+        // Update calendar title
+        function updateCalendarTitle() {
+            const titleEl = getById('calendarTitle');
+            const date = new Date(calendarViewDate);
+            
+            switch (calendarViewMode) {
+                case 'today':
+                    titleEl.textContent = date.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    break;
+                case 'week':
+                    const weekStart = new Date(date);
+                    weekStart.setDate(date.getDate() - date.getDay());
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 6);
+                    titleEl.textContent = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                    break;
+                case 'month':
+                    titleEl.textContent = date.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long' 
+                    });
+                    break;
+            }
+        }
+        
+        // Render Today View
+        function renderTodayView() {
+            const calendar = getById('calendar');
+            const today = new Date(calendarViewDate);
+            const dateStr = formatDate(today);
+            
+            if (!isWorkingDay(today)) {
+                calendar.innerHTML = `
+                    <div class="today-view">
+                        <div class="today-header">🚫 ${today.toLocaleDateString('en-US', { weekday: 'long' })} - Non-working day</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            calendar.className = 'today-view';
+            
+            let html = `<div class="today-header">
+                📅 ${today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>`;
+            
+            html += `<div class="time-header">Time</div>`;
+            html += `<div class="day-column" data-date="${dateStr}">`;
+            
+            const startTime = parseTime(officeConfig.startTime);
+            const endTime = parseTime(officeConfig.endTime);
+            
+            for (let time = startTime; time < endTime; time += 30) {
+                const timeStr = formatTimeFromMinutes(time);
+                const isHourMark = time % 60 === 0;
+                
+                if (time % 60 === 0) {
+                    html += `<div class="time-slot ${isHourMark ? 'hour-mark' : ''}">${formatTime(timeStr)}</div>`;
+                }
+                
+                // Only add click handlers for admin users
+                const clickHandler = currentUser.role === 'admin' ? `onclick="handleTimeSlotClick('${dateStr}', '${timeStr}')"` : '';
+                html += `<div class="time-cell ${isHourMark ? 'hour-mark' : ''} selectable" 
+                             data-date="${dateStr}" 
+                             data-time="${timeStr}"
+                             ${clickHandler}></div>`;
+            }
+            
+            html += `</div>`;
+            calendar.innerHTML = html;
+            
+            setTimeout(() => renderBookingsForDateRange([today]), 50);
+        }
+        
+        // Render Week View
+        function renderWeekView() {
+            const calendar = getById('calendar');
+            const weekStart = new Date(calendarViewDate);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            
+            const weekDates = Array.from({length: 7}, (_, i) => {
+                const date = new Date(weekStart);
+                date.setDate(date.getDate() + i);
+                return date;
+            });
+            
+            calendar.className = 'weekly-view';
+            
+            let html = `<div class="time-header">Time</div>`;
+            html += weekDates.map(d => 
+                `<div class="day-header ${formatDate(d) === formatDate(new Date()) ? 'today' : ''}" data-date="${formatDate(d)}">
+                    <div class="day-header-day">${d.toLocaleDateString('en-US', {weekday: 'short'}).toUpperCase()}</div>
+                    <div class="day-header-date">${d.getDate()}</div>
+                </div>`
+            ).join('');
+            
+            const startTime = parseTime(officeConfig.startTime);
+            const endTime = parseTime(officeConfig.endTime);
+            
+            for (let time = startTime; time < endTime; time += 30) {
+                const timeStr = formatTimeFromMinutes(time);
+                const isHourMark = time % 60 === 0;
+                
+                if (isHourMark) {
+                    html += `<div class="time-slot hour-mark">${formatTime(timeStr)}</div>`;
+                } else {
+                    html += `<div class="time-slot"></div>`;
+                }
+                
+                html += weekDates.map(date => {
+                    const dateStr = formatDate(date);
+                    const isWorkDay = isWorkingDay(date);
+                    
+                    // Only add click handlers for admin users
+                    const clickHandler = (isWorkDay && currentUser.role === 'admin') ? `onclick="handleTimeSlotClick('${dateStr}', '${timeStr}')"` : '';
+                    
+                    return `<div class="time-cell ${isHourMark ? 'hour-mark' : ''} ${!isWorkDay ? 'off-day' : 'selectable'}" 
+                                 data-date="${dateStr}" 
+                                 data-time="${timeStr}"
+                                 ${clickHandler}></div>`;
+                }).join('');
+            }
+            
+            calendar.innerHTML = html;
+            setTimeout(() => renderBookingsForDateRange(weekDates), 50);
+        }
+        
+        // Render Month View
+        function renderMonthView() {
+            const calendar = getById('calendar');
+            const year = calendarViewDate.getFullYear();
+            const month = calendarViewDate.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - startDate.getDay());
+            
+            const dates = [];
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                dates.push(date);
+            }
+            
+            calendar.className = 'monthly-view';
+            
+            let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                .map(day => `<div class="month-day-header">${day}</div>`)
+                .join('');
+            
+            html += dates.map(date => {
+                const dateStr = formatDate(date);
+                const isCurrentMonth = date.getMonth() === month;
+                const isToday = dateStr === formatDate(new Date());
+                const dayBookings = allBookings.filter(b => b.date === dateStr);
+                
+                const bookingsHtml = dayBookings.slice(0, 3).map(booking => {
+                    const room = rooms.find(r => r.id === booking.roomId);
+                    // Only add click handler for admin users
+                    const clickHandler = currentUser.role === 'admin' ? `onclick="window.showBookingModal('${booking.id}')"` : '';
+                    return `<div class="month-booking ${room.color}" 
+                                 ${clickHandler}
+                                 title="${booking.subject} - ${formatTime(booking.startTime)} (${room.shortName}) ${currentUser.role === 'admin' ? '- Click to edit' : '- Read-only'}">
+                        ${booking.subject}
+                    </div>`;
+                }).join('');
+                
+                const moreBookings = dayBookings.length > 3 ? 
+                    `<div style="font-size: 0.7rem; color: var(--gray-500); margin-top: 0.25rem;">+${dayBookings.length - 3} more</div>` : '';
+                
+                // Only add click handler for admin users
+                const dayClickHandler = currentUser.role === 'admin' ? `onclick="handleDayClick('${dateStr}')"` : '';
+                
+                return `<div class="month-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" 
+                             data-date="${dateStr}"
+                             ${dayClickHandler}
+                             title="${currentUser.role === 'admin' ? 'Click to view day details' : 'Read-only view'}">
+                    <div class="month-day-number">${date.getDate()}</div>
+                    ${bookingsHtml}
+                    ${moreBookings}
+                </div>`;
+            }).join('');
+            
+            calendar.innerHTML = html;
+        }
+        
+        // Render bookings for specific date range
+        function renderBookingsForDateRange(dates) {
+            const calendar = getById('calendar');
+            const startTime = parseTime(officeConfig.startTime);
+            const slotHeight = 60;
+            
+            allBookings.forEach(booking => {
+                const bookingDate = new Date(booking.date + 'T00:00:00');
+                if (!dates.some(d => formatDate(d) === booking.date)) return;
+                
+                const dayColumn = calendar.querySelector(`[data-date="${booking.date}"]`);
+                if (!dayColumn || dayColumn.classList.contains('off-day')) return;
+                
+                const bookingStart = parseTime(booking.startTime);
+                const bookingEnd = parseTime(booking.endTime);
+                const duration = bookingEnd - bookingStart;
+                
+                const topPosition = ((bookingStart - startTime) / 30) * slotHeight;
+                const height = Math.max((duration / 30) * slotHeight - 4, 30);
+                
+                const room = rooms.find(r => r.id === booking.roomId);
+                
+                const now = new Date();
+                const currentTime = now.toTimeString().slice(0, 5);
+                const isOngoing = booking.date === formatDate(now) && 
+                                booking.startTime <= currentTime && 
+                                booking.endTime > currentTime;
+                
+                let progressHtml = '';
+                if (isOngoing) {
+                    const elapsed = parseTime(currentTime) - parseTime(booking.startTime);
+                    const progress = Math.min((elapsed / duration) * 100, 100);
+                    progressHtml = `
+                        <div class="booking-progress">
+                            <div class="booking-progress-bar" style="width: ${progress}%"></div>
+                        </div>
+                    `;
+                }
+                
+                const bookingBlock = document.createElement('div');
+                bookingBlock.className = `booking-block ${room.color}`;
+                bookingBlock.style.cssText = `
+                    position: absolute;
+                    top: ${topPosition}px; 
+                    height: ${height}px;
+                    left: 4px;
+                    right: 4px;
+                    z-index: 10;
+                `;
+                
+                bookingBlock.innerHTML = `
+                    <div class="booking-subject">${booking.subject}</div>
+                    <div class="booking-organizer">👤 ${booking.organizer || 'No organizer'}</div>
+                    <div class="booking-room">🏢 ${room.shortName}</div>
+                    <div class="booking-time">⏰ ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</div>
+                    ${progressHtml}
+                `;
+                
+                // Only add click functionality for admin users
+                if (currentUser.role === 'admin') {
+                    bookingBlock.onclick = (e) => {
+                        e.stopPropagation();
+                        showBookingModal(booking.id);
+                    };
+                    bookingBlock.title = `Click to edit: ${booking.subject}`;
+                } else {
+                    bookingBlock.title = `${booking.subject}\n${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}\nRoom: ${room.name}\nOrganizer: ${booking.organizer || 'None'}\n(Read-only view)`;
+                }
+                
+                dayColumn.style.position = 'relative';
+                dayColumn.appendChild(bookingBlock);
+            });
+        }
+        
+        // Update current time indicator
+        function updateCurrentTimeIndicator() {
+            const indicator = getById('currentTimeIndicator');
+            if (!indicator || calendarViewMode === 'month') {
+                if (indicator) indicator.style.display = 'none';
+                return;
+            }
+            
+            const now = new Date();
+            const currentDate = formatDate(now);
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            const startTime = parseTime(officeConfig.startTime);
+            const endTime = parseTime(officeConfig.endTime);
+            
+            let shouldShow = false;
+            
+            if (calendarViewMode === 'today') {
+                shouldShow = currentDate === formatDate(calendarViewDate);
+            } else if (calendarViewMode === 'week') {
+                const weekStart = new Date(calendarViewDate);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                shouldShow = currentDate >= formatDate(weekStart) && currentDate <= formatDate(weekEnd);
+            }
+            
+            if (!shouldShow || currentTime < startTime || currentTime > endTime) {
+                indicator.style.display = 'none';
+                return;
+            }
+            
+            const slotHeight = 60;
+            const minutesPastStart = currentTime - startTime;
+            const topPosition = (minutesPastStart / 30) * slotHeight;
+            
+            indicator.style.display = 'block';
+            indicator.style.top = `${topPosition}px`;
+            
+            if (calendarViewMode === 'week') {
+                const dayIndex = now.getDay();
+                indicator.style.left = `${100 + (dayIndex * (100 / 7))}px`;
+                indicator.style.width = `${100 / 7}%`;
+            }
+        }
+        
+        // Handle time slot clicks (admin only)
+        window.handleTimeSlotClick = function(date, time) {
+            if (!checkPermission('create bookings')) return;
+            
+            const endTime = formatTimeFromMinutes(parseTime(time) + 60);
+            const conflicts = allBookings.filter(b => 
+                b.date === date && 
+                time < b.endTime && 
+                endTime > b.startTime
+            );
+            
+            if (conflicts.length > 0) {
+                showNotification('This time slot conflicts with existing bookings.', 'error');
+                return;
+            }
+            
+            showBookingModal(null, null, date, time, endTime);
+        };
+        
+        // Handle day clicks in month view (admin only)
+        window.handleDayClick = function(date) {
+            if (!checkPermission('view day details')) return;
+            
+            calendarViewDate = new Date(date + 'T00:00:00');
+            calendarViewMode = 'today';
+            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === 'today');
+            });
+            renderCalendar();
+        };
+        
+        // Render bookings table (admin only)
+        function renderBookingsTable() {
+            if (currentUser.role !== 'admin') return;
+            
+            const tableBody = getById('bookingsTable');
+            
+            if (allBookings.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem;">📭 No bookings found.</td></tr>`;
+                return;
+            }
+            
+            const sortedBookings = [...allBookings].sort((a, b) => {
+                const dateA = new Date(`${a.date}T${a.startTime}`);
+                const dateB = new Date(`${b.date}T${b.startTime}`);
+                return dateB - dateA;
+            });
+            
+            tableBody.innerHTML = sortedBookings.map(booking => {
+                const room = rooms.find(r => r.id === booking.roomId);
+                const bookingDateTime = new Date(`${booking.date}T${booking.endTime}`);
+                const now = new Date();
+                const isPast = bookingDateTime < now;
+                const isOngoing = new Date(`${booking.date}T${booking.startTime}`) <= now && bookingDateTime > now;
+                
+                let statusBadge;
+                if (isPast) {
+                    statusBadge = '<span style="background: var(--gray-400); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Completed</span>';
+                } else if (isOngoing) {
+                    statusBadge = '<span style="background: var(--danger-500); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Ongoing</span>';
+                } else {
+                    statusBadge = '<span style="background: var(--success-500); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Scheduled</span>';
+                }
+                
+                return `<tr style="${isPast ? 'opacity: 0.6;' : ''}">
+                    <td><strong>${booking.subject}</strong></td>
+                    <td>🏢 ${room ? room.name : `Room ${booking.roomId}`}</td>
+                    <td>📅 ${booking.date}<br>⏰ ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</td>
+                    <td>👤 ${booking.organizer || 'No organizer'}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm" onclick="window.showBookingModal('${booking.id}')" title="Edit booking">✏️</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.deleteBooking('${booking.id}')" title="Delete booking">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // Quick book room (admin only)
+        window.quickBookRoom = function(roomId) {
+            if (!checkPermission('create bookings')) return;
+            
+            const now = new Date();
+            const roundedHour = Math.ceil(now.getHours() + now.getMinutes() / 60);
+            const startTime = `${String(roundedHour).padStart(2, '0')}:00`;
+            const endTime = `${String(roundedHour + 1).padStart(2, '0')}:00`;
+            
+            showBookingModal(null, roomId, formatDate(now), startTime, endTime);
+        };
+        
+        // Show booking modal (admin only)
+        window.showBookingModal = function(bookingId = null, defaultRoomId = null, defaultDate = null, defaultStartTime = null, defaultEndTime = null) {
+            if (!checkPermission('manage bookings')) return;
+            
+            const form = getById('bookingForm');
+            form.reset();
+            
+            const dateInput = getById('bookingDate');
+            dateInput.min = formatDate(new Date());
+            
+            getById('bookingModalTitle').textContent = bookingId ? '✏️ Edit Booking' : '➕ New Booking';
+            getById('bookingSubmitBtn').innerHTML = bookingId ? '💾 Update Booking' : '📅 Create Booking';
+            getById('bookingId').value = bookingId || '';
+            
+            if (bookingId) {
+                const booking = allBookings.find(b => b.id === bookingId);
+                if (booking) {
+                    getById('bookingRoom').value = booking.roomId;
+                    getById('bookingDate').value = booking.date;
+                    getById('bookingStart').value = booking.startTime;
+                    getById('bookingEnd').value = booking.endTime;
+                    getById('bookingSubject').value = booking.subject;
+                    getById('bookingOrganizer').value = booking.organizer || '';
+                }
+            } else {
+                getById('bookingDate').value = defaultDate || formatDate(new Date());
+                
+                const now = new Date();
+                const startTime = defaultStartTime || `${String(Math.max(now.getHours() + 1, 9)).padStart(2, '0')}:00`;
+                const endTime = defaultEndTime || `${String(Math.max(now.getHours() + 2, 10)).padStart(2, '0')}:00`;
+                
+                getById('bookingStart').value = startTime;
+                getById('bookingEnd').value = endTime;
+                getById('bookingRoom').value = defaultRoomId || rooms[0].id;
+                getById('bookingOrganizer').value = 'Admin';
+            }
+            
+            getById('bookingModal').classList.add('show');
+            setTimeout(() => getById('bookingSubject').focus(), 300);
+        };
+        
+        // Check room availability
+        function isRoomAvailable(roomId, date, startTime, endTime, excludeId = null) {
+            const conflicts = allBookings.filter(b => 
+                b.id !== excludeId && 
+                b.roomId === roomId && 
+                b.date === date && 
+                startTime < b.endTime && 
+                endTime > b.startTime
+            );
+            return conflicts.length === 0;
+        }
+
+        // Handle booking form submission (admin only)
+        async function handleSaveBooking(e) {
+            e.preventDefault();
+            
+            if (!checkPermission('save bookings')) return;
+            
+            const submitBtn = getById('bookingSubmitBtn');
+            const id = getById('bookingId').value;
+            
+            const data = {
+                roomId: Number(getById('bookingRoom').value), 
+                date: getById('bookingDate').value,
+                startTime: getById('bookingStart').value, 
+                endTime: getById('bookingEnd').value,
+                subject: getById('bookingSubject').value.trim() || "Untitled Meeting", 
+                organizer: getById('bookingOrganizer').value || 'Admin',
+                lastUpdated: serverTimestamp()
+            };
+            
+            // Validation
+            const selectedDate = new Date(data.date + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                return showNotification('Cannot create bookings for past dates.', 'error');
+            }
+            
+            if (!isWorkingDay(selectedDate)) {
+                return showNotification('Bookings only allowed on work days (Sunday-Thursday).', 'error');
+            }
+            
+            if (data.startTime < officeConfig.startTime || data.endTime > officeConfig.endTime) {
+                return showNotification(`Booking must be within office hours (${formatTime(officeConfig.startTime)} - ${formatTime(officeConfig.endTime)}).`, 'error');
+            }
+            
+            if (data.startTime >= data.endTime) {
+                return showNotification('End time must be after start time.', 'error');
+            }
+            
+            const duration = parseTime(data.endTime) - parseTime(data.startTime);
+            if (duration < 30) {
+                return showNotification('Minimum booking duration is 30 minutes.', 'error');
+            }
+            
+            if (!isRoomAvailable(data.roomId, data.date, data.startTime, data.endTime, id)) {
+                return showNotification('This room is already booked for the selected time.', 'error');
+            }
+            
+            submitBtn.disabled = true;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="spinner"></div> Saving...';
+            
+            try {
+                if (id) {
+                    await setDoc(doc(db, "bookings", id), data);
+                    showNotification('✅ Booking updated successfully!', 'success');
+                } else {
+                    await addDoc(collection(db, "bookings"), data);
+                    showNotification('🎉 Booking created successfully!', 'success');
+                }
+                
+                getById('bookingModal').classList.remove('show');
+            } catch (error) {
+                console.error("Error saving booking:", error);
+                showNotification('❌ Could not save booking. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+        
+        // Delete booking (admin only)
+        window.deleteBooking = async function(bookingId) {
+            if (!checkPermission('delete bookings')) return;
+            
+            const booking = allBookings.find(b => b.id === bookingId);
+            if (!booking) return;
+            
+            if (!confirm(`Are you sure you want to delete:\n\n"${booking.subject}"\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                await deleteDoc(doc(db, "bookings", bookingId));
+                showNotification('🗑️ Booking deleted successfully.', 'success');
+            } catch (error) {
+                console.error("Error deleting booking:", error);
+                showNotification('❌ Could not delete booking. Please try again.', 'error');
+            }
+        };
+        
+        // Handle admin login
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = getById('loginUsername').value.trim();
+            const password = getById('loginPassword').value;
+            const submitBtn = getById('loginSubmitBtn');
+            
+            if (!username || !password) {
+                return showNotification('Please enter both username and password.', 'error');
+            }
+            
+            submitBtn.disabled = true;
+            getById('loginBtnText').innerHTML = '<div class="spinner"></div> Logging in...';
+            
+            try {
+                if (username === 'cchps@icddrb' && password === '987654321') {
+                    currentUser.role = 'admin';
+                    document.body.classList.add('admin-user');
+                    getById('userRole').textContent = 'Admin';
+                    getById('authBtn').textContent = 'Logout';
+                    
+                    getById('loginModal').classList.remove('show');
+                    showNotification('🎉 Welcome back, HSPSD Admin! You now have full access.', 'success');
+                    renderAllViews();
+                } else {
+                    showNotification('❌ Invalid credentials. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                showNotification('❌ Login failed. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                getById('loginBtnText').textContent = 'Login as Admin';
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout? You will lose admin access.')) {
+                currentUser.role = 'viewer';
+                document.body.classList.remove('admin-user');
+                getById('userRole').textContent = 'Viewer';
+                getById('authBtn').textContent = 'Admin Login';
+                showView('dashboard'); // Redirect to dashboard
+                showNotification('👋 Logged out successfully. You now have read-only access.', 'success');
+            }
+        }
+
+        // Initialize Firebase listeners
+        function initFirebaseListeners() {
+            if (bookingsUnsubscribe) {
+                bookingsUnsubscribe();
+            }
+            
+            bookingsUnsubscribe = onSnapshot(
+                collection(db, "bookings"), 
+                (snapshot) => {
+                    updateConnectionStatus(true);
+                    
+                    allBookings = snapshot.docs.map(doc => ({ 
+                        id: doc.id, 
+                        ...doc.data() 
+                    }));
+                    
+                    renderAllViews();
+                }, 
+                (error) => {
+                    console.error("Firestore error:", error);
+                    updateConnectionStatus(false);
+                    showNotification("🔌 Connection error. Retrying...", "error");
+                    setTimeout(initFirebaseListeners, 5000);
+                }
+            );
+        }
+
+        // Update connection status
+        function updateConnectionStatus(online) {
+            isOnline = online;
+            const statusEl = getById('connectionStatus');
+            const dotEl = document.querySelector('.status-dot');
+            const parentEl = statusEl.parentElement;
+            
+            if (online) {
+                statusEl.textContent = 'Connected';
+                parentEl.classList.remove('offline');
+                parentEl.classList.add('online');
+                dotEl.classList.remove('offline');
+                dotEl.classList.add('online');
+            } else {
+                statusEl.textContent = 'Offline';
+                parentEl.classList.remove('online');
+                parentEl.classList.add('offline');
+                dotEl.classList.remove('online');
+                dotEl.classList.add('offline');
+            }
+        }
+
+        // Initialize the application
+        function init() {
+            // Clock updates
+            const updateClock = () => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                getById('liveClock').textContent = timeStr;
+                getById('currentTimeDisplay').textContent = timeStr;
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Regular updates
+            setInterval(updateCurrentTimeIndicator, 30000);
+            setInterval(renderDashboard, 60000);
+            
+            initFirebaseListeners();
+            
+            // Navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => 
+                tab.addEventListener('click', () => showView(tab.dataset.view))
+            );
+            
+            // Calendar view mode selector
+            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    calendarViewMode = btn.dataset.view;
+                    document.querySelectorAll('.calendar-view-btn').forEach(b => 
+                        b.classList.toggle('active', b === btn));
+                    renderCalendar();
+                });
+            });
+            
+            // Calendar navigation
+            getById('prevBtn').addEventListener('click', () => {
+                switch (calendarViewMode) {
+                    case 'today':
+                        calendarViewDate.setDate(calendarViewDate.getDate() - 1);
+                        break;
+                    case 'week':
+                        calendarViewDate.setDate(calendarViewDate.getDate() - 7);
+                        break;
+                    case 'month':
+                        calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+                        break;
+                }
+                renderCalendar();
+            });
+            
+            getById('nextBtn').addEventListener('click', () => {
+                switch (calendarViewMode) {
+                    case 'today':
+                        calendarViewDate.setDate(calendarViewDate.getDate() + 1);
+                        break;
+                    case 'week':
+                        calendarViewDate.setDate(calendarViewDate.getDate() + 7);
+                        break;
+                    case 'month':
+                        calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+                        break;
+                }
+                renderCalendar();
+            });
+            
+            getById('todayBtn').addEventListener('click', () => {
+                calendarViewDate = new Date();
+                renderCalendar();
+            });
+            
+            // Auth
+            getById('authBtn').addEventListener('click', () => {
+                if (currentUser.role === 'viewer') {
+                    getById('loginModal').classList.add('show');
+                } else {
+                    handleLogout();
+                }
+            });
+            
+            // Modal events
+            [getById('closeLoginModalBtn'), getById('closeBookingModalBtn')].forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.target.closest('.modal').classList.remove('show');
+                    });
+                }
+            });
+            
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Forms
+            getById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Admin-only form events
+            const bookingForm = getById('bookingForm');
+            if (bookingForm) {
+                bookingForm.addEventListener('submit', handleSaveBooking);
+            }
+            
+            // Admin-only booking buttons
+            const newCalendarBtn = getById('newCalendarBookingBtn');
+            const newBookingBtn = getById('newBookingBtn');
+            const cancelBtn = getById('cancelBookingBtn');
+            
+            if (newCalendarBtn) newCalendarBtn.addEventListener('click', () => checkPermission('create bookings') && showBookingModal());
+            if (newBookingBtn) newBookingBtn.addEventListener('click', () => checkPermission('create bookings') && showBookingModal());
+            if (cancelBtn) cancelBtn.addEventListener('click', () => getById('bookingModal').classList.remove('show'));
+            
+            // Populate selects
+            const populateSelect = (elId, options, placeholder = '') => {
+                const select = getById(elId);
+                if (select) {
+                    select.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') + 
+                        options.map(o => `<option value="${o.value}">${o.text}</option>`).join('');
+                }
+            };
+            
+            populateSelect('bookingRoom', rooms.map(r => ({
+                value: r.id, 
+                text: `🏢 ${r.name} (${r.capacity} people)`
+            })));
+            
+            populateSelect('bookingOrganizer', users.map(u => ({
+                value: u, 
+                text: `👤 ${u}`
+            })), 'Select organizer...');
+            
+            // Keyboard shortcuts (admin only for booking creation)
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'n':
+                            if (currentUser.role === 'admin') {
+                                e.preventDefault();
+                                showBookingModal();
+                            }
+                            break;
+                        case '1':
+                            e.preventDefault();
+                            showView('dashboard');
+                            break;
+                        case '2':
+                            e.preventDefault();
+                            showView('calendar');
+                            break;
+                    }
+                }
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.show').forEach(modal => {
+                        modal.classList.remove('show');
+                    });
+                }
+            });
+            
+            // Start with dashboard (available to all users)
+            showView('dashboard');
+            
+            // Expose functions globally (with permission checks built-in)
+            window.showBookingModal = showBookingModal;
+            window.deleteBooking = deleteBooking;
+            window.quickBookRoom = quickBookRoom;
+            window.handleTimeSlotClick = handleTimeSlotClick;
+            window.handleDayClick = handleDayClick;
+            
+            console.log('🚀 HSPSD Meeting Room Dashboard initialized successfully!');
+            console.log(`👁️ Current user role: ${currentUser.role}`);
+            console.log('🏢 Available rooms:', rooms.map(r => `${r.name} (${r.capacity} people)`));
+        }
+
+        // Start the application
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
