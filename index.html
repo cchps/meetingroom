@@ -3,341 +3,960 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HSPSD Meeting Room Dashboard</title>
+    <title>HSPSD Smart Meeting Hub</title>
     <style>
         :root {
-            --primary-500: #3b82f6; --primary-600: #2563eb; --primary-700: #1d4ed8;
-            --secondary-500: #64748b;
-            --success-500: #10b981; --danger-500: #ef4444; --warning-500: #f59e0b;
-            --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0; --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b; --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
-            --room1: #3b82f6; --room1-light: #dbeafe; --room1-dark: #1d4ed8;
-            --room2: #f97316; --room2-light: #fed7aa; --room2-dark: #c2410c;
-            --border-radius: 12px;
-            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,.05);
-            --shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
-            --header-gradient: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
-            --slot-height: 60px;
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-light: #e0e7ff;
+            --secondary: #64748b;
+            --success: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --info: #0ea5e9;
+            
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            
+            --radius: 12px;
+            --radius-lg: 16px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+            
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes slideIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        @keyframes highlight { 0% { background-color: transparent; } 50% { background-color: rgba(59, 130, 246, 0.1); } 100% { background-color: transparent; } }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-100); color: var(--gray-700); font-size: 15px; line-height: 1.5; }
-        
-        .header { background: var(--header-gradient); padding: 1rem 0; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
-        .header-content { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; color: white; }
-        .logo { display: flex; align-items: center; gap: .75rem; }
-        .logo-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; }
-        .logo h1 { font-size: 1.6rem; }
-        .logo-subtitle { font-size: 0.8rem; opacity: 0.8; margin-top: -0.25rem; }
-        .header-right { display: flex; align-items: center; gap: 1rem; }
-        .live-clock { font-weight: 500; background: rgba(255,255,255,0.1); padding: .5rem 1rem; border-radius: var(--border-radius); font-size: .9rem; }
-        .auth-btn { background: white; border: none; color: var(--primary-600); padding: .6rem 1.2rem; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; transition: all .2s; box-shadow: var(--shadow-sm); }
-        .auth-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-        
-        .nav-tabs { background: white; box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--gray-200); }
-        .nav-tabs-content { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; }
-        .nav-tab { padding: 1rem 1.5rem; color: var(--gray-400); border-bottom: 3px solid transparent; transition: all .2s; font-weight: 600; cursor: pointer; position: relative; }
-        .nav-tab.active, .nav-tab:hover { color: var(--primary-500); border-bottom-color: var(--primary-500); }
-        
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
-        .view { animation: fadeIn 0.5s ease-out; }
-        .card { background: white; border-radius: var(--border-radius); box-shadow: var(--shadow); border: 1px solid var(--gray-200); margin-bottom: 1.5rem; transition: all .2s ease-in-out; }
-        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-        .card-header { padding: 1.5rem; border-bottom: 1px solid var(--gray-200); }
-        .card-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { position: relative; padding: 1.5rem; overflow: hidden; }
-        .stat-icon { position: absolute; right: 1rem; top: 1rem; color: var(--primary-500); opacity: 0.1; font-size: 4rem; }
-        .stat-title { font-size: .9rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--gray-900); margin-top: 0.5rem; }
-        
-        .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .room-card { padding: 1.5rem; position: relative; overflow: hidden; }
-        .room-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary-500), var(--primary-700)); }
-        .room-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-        .room-info-section { flex: 1; }
-        .room-name { font-size: 1.2rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.25rem; }
-        .room-subtitle { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 0.5rem; }
-        .room-capacity { font-size: .8rem; color: var(--gray-400); display: flex; align-items: center; gap: 0.25rem; }
-        .room-status-section { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
-        .room-status-indicator { width: 12px; height: 12px; border-radius: 50%; }
-        .status-available .room-status-indicator { background: var(--success-500); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
-        .status-occupied .room-status-indicator { background: var(--danger-500); animation: pulse 2s infinite; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
-        .status-upcoming .room-status-indicator { background: var(--warning-500); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
-        .room-info { font-size: .9rem; color: var(--gray-500); margin-bottom: 1rem; line-height: 1.6; }
-        
-        .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1.2rem; border: none; border-radius: var(--border-radius); font-size: .9rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all .2s; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
-        .btn-primary { background: var(--primary-500); color: white; }
-        .btn-primary:hover { background: var(--primary-600); transform: translateY(-2px); }
-        .btn-danger { background: var(--danger-500); color: white; }
-        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
-        .btn-sm { padding: .4rem .8rem; font-size: .8rem; }
-        .btn:disabled { background: var(--gray-200); cursor: not-allowed; transform: none; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--gray-700);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-subtitle {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .clock {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-700);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        /* Navigation */
+        .nav {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+        }
+
+        .nav-item {
+            padding: 1rem 1.5rem;
+            color: var(--gray-600);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .nav-item:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .page {
+            opacity: 1;
+            transition: var(--transition-slow);
+        }
+
+        .page.hidden {
+            display: none;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Room Grid */
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .room-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .room-info h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .room-meta {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .room-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-available .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+        }
+
+        .status-occupied .status-dot {
+            background: var(--danger);
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .status-upcoming .status-dot {
+            background: var(--warning);
+            box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+        }
+
+        .room-details {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .meeting-info {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .room-actions {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* Modal System - PROPERLY CENTERED */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+            
+            /* PERFECT CENTERING */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9) translateY(20px);
+            transition: var(--transition);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Calendar Styles */
+        .calendar-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .calendar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .view-selector {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: var(--radius);
+            padding: 0.25rem;
+        }
+
+        .view-btn {
+            padding: 0.5rem 1rem;
+            background: none;
+            border: none;
+            border-radius: calc(var(--radius) - 2px);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .calendar-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .calendar-grid {
+            min-height: 400px;
+            padding: 1rem;
+        }
+
+        /* Week View */
+        .week-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            background: var(--gray-200);
+        }
+
+        .time-slot,
+        .day-header,
+        .calendar-cell {
+            background: white;
+            padding: 0.5rem;
+            min-height: 50px;
+        }
+
+        .day-header {
+            font-weight: 700;
+            text-align: center;
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .time-slot {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            text-align: center;
+            background: var(--gray-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-cell {
+            position: relative;
+            border: 1px solid var(--gray-100);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calendar-cell:hover {
+            background: var(--primary-light);
+        }
+
+        .booking-event {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin: 1px;
+            cursor: pointer;
+        }
+
+        /* Month View */
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--gray-200);
+        }
+
+        .month-day {
+            background: white;
+            min-height: 100px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .month-day:hover {
+            background: var(--primary-light);
+        }
+
+        .month-day.other-month {
+            background: var(--gray-50);
+            color: var(--gray-400);
+        }
+
+        .month-day.today {
+            background: var(--primary-light);
+            border: 2px solid var(--primary);
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 700;
+            color: var(--gray-900);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            padding: 1rem 1.5rem;
+            border-left: 4px solid var(--success);
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: var(--transition);
+            min-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            border-left-color: var(--danger);
+        }
+
+        .notification.warning {
+            border-left-color: var(--warning);
+        }
+
         /* Role-based visibility */
-        .admin-only { display: none !important; }
-        .viewer-only { display: block; }
-        .admin-user .admin-only { display: block !important; }
-        .admin-user .viewer-only { display: none; }
-        
-        /* Enhanced Calendar System */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
-        .calendar-controls { display: flex; gap: 0.75rem; align-items: center; }
-        .calendar-view-selector { display: flex; background: var(--gray-100); border-radius: var(--border-radius); padding: 0.25rem; margin-left: 1rem; }
-        .calendar-view-btn { padding: 0.6rem 1.2rem; background: transparent; border: none; border-radius: calc(var(--border-radius) - 2px); cursor: pointer; font-weight: 600; transition: all 0.2s; color: var(--gray-600); }
-        .calendar-view-btn.active { background: var(--primary-500); color: white; box-shadow: var(--shadow-sm); }
-        .calendar-view-btn:hover:not(.active) { background: var(--gray-200); }
-        
-        .calendar-container { background: white; border-radius: var(--border-radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 2rem; }
-        .calendar-wrapper { position: relative; overflow: auto; max-height: 80vh; }
-        
-        /* Today View */
-        .today-view { display: grid; grid-template-columns: 100px 1fr; }
-        .today-header { grid-column: 1 / -1; background: var(--gray-50); padding: 1rem; border-bottom: 2px solid var(--gray-200); text-align: center; font-weight: 700; font-size: 1.1rem; color: var(--gray-800); }
-        
-        /* Weekly View */
-        .weekly-view { display: grid; grid-template-columns: 100px repeat(7, 1fr); min-width: 1000px; }
-        .day-header { text-align: center; padding: 1rem 0.5rem; background: var(--gray-50); border-bottom: 2px solid var(--gray-200); border-right: 1px solid var(--gray-200); transition: all 0.2s; }
-        .day-header:hover { background: var(--gray-100); }
-        .day-header-day { font-size: .8rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
-        .day-header-date { font-size: 1.4rem; color: var(--gray-700); margin-top: 0.25rem; font-weight: 700; }
-        .day-header.today { background: linear-gradient(135deg, var(--primary-500), var(--primary-600)); color: white; }
-        .day-header.today .day-header-day { color: rgba(255,255,255,0.8); }
-        .day-header.today .day-header-date { color: white; }
-        
-        /* Monthly View */
-        .monthly-view { display: grid; grid-template-columns: repeat(7, 1fr); }
-        .month-day-header { text-align: center; padding: 1rem; background: var(--gray-100); border: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-700); }
-        .month-day { min-height: 120px; border: 1px solid var(--gray-200); padding: 0.5rem; background: white; position: relative; transition: all 0.2s; }
-        .month-day:hover { background: var(--gray-50); }
-        .month-day.other-month { background: var(--gray-50); color: var(--gray-400); }
-        .month-day.today { background: linear-gradient(135deg, var(--primary-50), var(--primary-100)); border-color: var(--primary-300); }
-        .month-day-number { font-weight: 700; margin-bottom: 0.5rem; }
-        .month-day.today .month-day-number { color: var(--primary-700); }
-        .month-booking { background: var(--primary-100); color: var(--primary-800); padding: 0.25rem; margin: 0.125rem 0; border-radius: 4px; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .month-booking.room1 { background: var(--room1-light); color: var(--room1-dark); }
-        .month-booking.room2 { background: var(--room2-light); color: var(--room2-dark); }
-        
-        /* Admin-only cursor for month bookings */
-        .admin-user .month-booking { cursor: pointer; }
-        .admin-user .month-booking:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
-        
-        /* Time Slots */
-        .time-header { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); border-right: 2px solid var(--gray-200); position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--gray-600); font-size: 0.9rem; }
-        .time-slot { height: var(--slot-height); text-align: center; padding: 0.5rem 0.25rem; font-size: .8rem; font-weight: 600; color: var(--gray-500); border-right: 2px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); display: flex; align-items: center; justify-content: center; position: sticky; left: 0; z-index: 5; }
-        .time-slot.hour-mark { border-bottom: 2px solid var(--gray-300); background: var(--gray-100); }
-        
-        /* Day Columns and Cells */
-        .day-column { position: relative; border-right: 1px solid var(--gray-200); min-height: var(--slot-height); }
-        .time-cell { height: var(--slot-height); border-bottom: 1px solid var(--gray-200); position: relative; transition: all 0.2s; background: white; }
-        .time-cell.hour-mark { border-bottom: 2px solid var(--gray-300); }
-        .time-cell.off-day { background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 8px, #f1f5f9 8px, #f1f5f9 16px); }
-        
-        /* Admin-only interactive time cells */
-        .admin-user .time-cell.selectable { cursor: pointer; }
-        .admin-user .time-cell.selectable:hover { background: rgba(59, 130, 246, 0.05); }
-        .admin-user .time-cell.selected { background: rgba(59, 130, 246, 0.1); border: 2px solid var(--primary-500); }
-        
-        /* Enhanced Booking Blocks */
-        .booking-block { position: absolute; left: 4px; right: 4px; padding: 0.5rem; border-radius: 6px; overflow: hidden; z-index: 10; transition: all .2s ease; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); box-shadow: var(--shadow-sm); }
-        
-        /* Admin-only interactive booking blocks */
-        .admin-user .booking-block { cursor: pointer; }
-        .admin-user .booking-block:hover { transform: translateX(2px) translateY(-1px); box-shadow: var(--shadow-lg); z-index: 15; }
-        
-        .booking-block.room1 { background: linear-gradient(135deg, var(--room1-light) 0%, rgba(255,255,255,0.95) 100%); border-left: 4px solid var(--room1); color: var(--room1-dark); }
-        .booking-block.room2 { background: linear-gradient(135deg, var(--room2-light) 0%, rgba(255,255,255,0.95) 100%); border-left: 4px solid var(--room2); color: var(--room2-dark); }
-        .booking-subject { font-weight: 700; font-size: .85rem; margin-bottom: 0.25rem; line-height: 1.2; }
-        .booking-organizer { font-size: .75rem; opacity: .8; }
-        .booking-time { font-size: .7rem; opacity: .7; margin-top: 0.25rem; }
-        .booking-room { font-size: .7rem; opacity: .7; margin-top: 0.25rem; font-weight: 600; }
-        .booking-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.1); }
-        .booking-progress-bar { height: 100%; background: var(--success-500); transition: width 1s ease; border-radius: 0 0 6px 6px; }
-        
-        /* Current Time Indicator */
-        .current-time-indicator { position: absolute; left: 100px; right: 0; height: 2px; background: linear-gradient(90deg, var(--danger-500), #ff6b6b); z-index: 20; transition: top 1s ease; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
-        .current-time-indicator::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: var(--danger-500); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
-        
-        /* Permission message for viewers */
-        .permission-message { background: var(--gray-50); border: 2px dashed var(--gray-300); border-radius: var(--border-radius); padding: 2rem; text-align: center; color: var(--gray-500); margin: 1rem 0; }
-        .permission-message-icon { font-size: 3rem; margin-bottom: 1rem; }
-        
-        .table { width: 100%; border-collapse: collapse; } 
-        .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--gray-200); }
-        .table th { background: var(--gray-100); font-weight: 600; position: sticky; top: 0; }
-        .table tbody tr:hover { background: var(--gray-50); }
-        
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all .3s; backdrop-filter: blur(4px); }
-        .modal.show { opacity: 1; visibility: visible; }
-        .modal-content { background: white; border-radius: var(--border-radius); max-width: 600px; width: 90%; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
-        .modal-header { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-200); }
-        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); }
-        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-400); padding: 0.5rem; border-radius: 50%; transition: all 0.2s; }
-        .modal-close:hover { background: var(--gray-100); color: var(--gray-600); }
-        .modal-body { padding: 2rem; }
-        
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .5rem; color: var(--gray-700); }
-        .form-input, .form-select { width: 100%; padding: .75rem; border: 1px solid var(--gray-200); border-radius: var(--border-radius); font-size: .9rem; transition: all 0.2s; }
-        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary-500); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        
-        .hidden { display: none !important; }
-        
-        .loader { text-align: center; padding: 3rem; font-weight: 500; color: var(--gray-400); }
-        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; margin-right: 8px; }
-        
-        .notification { position: fixed; bottom: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: var(--border-radius); color: white; font-weight: 600; z-index: 2000; box-shadow: var(--shadow-lg); transform: translateY(120%); transition: transform 0.4s ease-in-out; min-width: 300px; }
-        .notification.show { transform: translateY(0); }
-        .notification.success { background: linear-gradient(135deg, var(--success-500), #059669); }
-        .notification.error { background: linear-gradient(135deg, var(--danger-500), #dc2626); }
-        .notification.warning { background: linear-gradient(135deg, var(--warning-500), #d97706); }
-        
-        .connection-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; padding: 0.5rem 1rem; border-radius: var(--border-radius); background: rgba(255,255,255,0.1); }
-        .connection-status.online { color: #10b981; } 
-        .connection-status.offline { color: #ef4444; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .status-dot.online { background: #10b981; animation: pulse 2s infinite; } 
-        .status-dot.offline { background: #ef4444; }
-        
-        /* Responsive Design */
+        .admin-only,
+        .staff-only {
+            display: none !important;
+        }
+
+        .viewer-only {
+            display: block;
+        }
+
+        .admin-user .admin-only,
+        .admin-user .staff-only {
+            display: block !important;
+        }
+
+        .staff-user .staff-only {
+            display: block !important;
+        }
+
+        .admin-user .viewer-only,
+        .staff-user .viewer-only {
+            display: none !important;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: var(--gray-500);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gray-300);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .container { padding: 1rem; }
-            .weekly-view { grid-template-columns: 80px repeat(7, 1fr); min-width: 800px; }
-            .time-slot { font-size: 0.7rem; padding: 0.25rem; }
-            .day-header { padding: 0.75rem 0.25rem; }
-            .day-header-date { font-size: 1.2rem; }
-            .form-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .room-grid { grid-template-columns: 1fr; }
-            .calendar-header { flex-direction: column; align-items: stretch; }
-            .calendar-view-selector { margin-left: 0; margin-top: 1rem; }
+            .container {
+                padding: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rooms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .calendar-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .week-grid {
+                grid-template-columns: 60px repeat(7, 1fr);
+            }
         }
     </style>
 </head>
-<body>
+<body class="viewer-user">
+    <!-- Header -->
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                <div class="logo-icon">HSPSD</div>
-                <div>
-                    <h1>Meeting Room Dashboard</h1>
+                <div class="logo-icon">🏢</div>
+                <div class="logo-text">
+                    <h1>Smart Meeting Hub</h1>
                     <div class="logo-subtitle">Health Systems and Population Studies Division</div>
                 </div>
             </div>
+            
             <div class="header-right">
-                <div class="connection-status online">
-                    <div class="status-dot online"></div>
-                    <span id="connectionStatus">Connected</span>
-                </div>
-                <div id="liveClock" class="live-clock"></div>
-                <div class="user-info" style="display:flex; align-items:center; gap:0.75rem;">
-                    <span id="userRole">Viewer</span>
-                    <button id="authBtn" class="auth-btn">Admin Login</button>
+                <div class="clock" id="liveClock">--:--</div>
+                
+                <div class="user-section">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">👤</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;" id="userRole">Viewer Mode</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;" id="userName">Read-only access</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Simple Login Buttons -->
+                    <div class="viewer-only">
+                        <button class="btn btn-outline" id="staffLoginBtn">👥 Staff Login</button>
+                        <button class="btn btn-primary" id="adminLoginBtn">🔐 Admin Login</button>
+                    </div>
+                    
+                    <!-- Logout Button -->
+                    <button class="btn btn-danger admin-only staff-only" id="logoutBtn">🚪 Logout</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <nav class="nav-tabs">
-        <div class="nav-tabs-content">
-            <div class="nav-tab active" data-view="dashboard">📊 Dashboard</div>
-            <div class="nav-tab" data-view="calendar">📅 Calendar</div>
-            <div class="nav-tab admin-only" data-view="bookings">⚙️ Manage Bookings</div>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-item active" data-view="dashboard">📊 Dashboard</div>
+            <div class="nav-item" data-view="calendar">📅 Calendar</div>
+            <div class="nav-item admin-only staff-only" data-view="bookings">📋 My Bookings</div>
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="container">
-        <!-- Dashboard View - Available to All Users -->
-        <div id="dashboardView" class="view">
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page">
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">📅</div>
-                    <div class="stat-title">Today's Bookings</div>
                     <div class="stat-value" id="todayBookings">0</div>
+                    <div class="stat-label">Today's Meetings</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⚡️</div>
-                    <div class="stat-title">System Status</div>
-                    <div class="stat-value" id="systemStatus" style="color: var(--success-500);">Live</div>
+                    <div class="stat-value" id="totalRooms">2</div>
+                    <div class="stat-label">Meeting Rooms</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⏰</div>
-                    <div class="stat-title">Current Time</div>
-                    <div class="stat-value" id="currentTimeDisplay">--:--</div>
+                    <div class="stat-value" id="activeBookings">0</div>
+                    <div class="stat-label">Active Bookings</div>
+                </div>
+                <div class="stat-card admin-only staff-only">
+                    <div class="stat-value" id="myBookings">0</div>
+                    <div class="stat-label">My Bookings</div>
                 </div>
             </div>
-            
-            <h2 class="card-title" style="margin-bottom: 1rem; font-size: 1.5rem;">🏢 HSPSD Meeting Rooms Status</h2>
-            <div id="roomGrid" class="room-grid"><div class="loader">Loading Room Status...</div></div>
-            
-            <!-- Viewer Permission Message -->
-            <div class="permission-message viewer-only">
-                <div class="permission-message-icon">👁️</div>
-                <h3 style="margin-bottom: 0.5rem; color: var(--gray-700);">Viewer Mode</h3>
-                <p>You have read-only access to view meeting schedules and room status. To create, edit, or delete bookings, please contact an administrator.</p>
+
+            <!-- Rooms Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🏢 Meeting Rooms Status</h2>
+                </div>
+                <div class="card-body">
+                    <div class="rooms-grid" id="roomsGrid">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading rooms...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Viewer Message -->
+            <div class="viewer-only" style="margin-top: 2rem;">
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👁️</div>
+                        <h3 style="margin-bottom: 1rem; color: var(--gray-900);">Welcome to Smart Meeting Hub</h3>
+                        <p style="color: var(--gray-600); margin-bottom: 2rem;">
+                            You're currently in viewer mode. Login to book and manage meetings.
+                        </p>
+                        <div style="display: flex; gap: 1rem; justify-content: center;">
+                            <button class="btn btn-primary" onclick="document.getElementById('staffLoginBtn').click()">
+                                👥 Staff Login
+                            </button>
+                            <button class="btn btn-outline" onclick="document.getElementById('adminLoginBtn').click()">
+                                🔐 Admin Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Calendar View - Read-only for Viewers, Interactive for Admins -->
-        <div id="calendarView" class="view hidden">
+        <!-- Calendar Page -->
+        <div id="calendarPage" class="page hidden">
             <div class="calendar-header">
-                <div class="calendar-controls">
-                    <button class="btn" id="prevBtn">← Previous</button>
+                <div class="calendar-nav">
+                    <button class="btn btn-secondary" id="prevBtn">‹ Prev</button>
                     <button class="btn btn-primary" id="todayBtn">Today</button>
-                    <button class="btn" id="nextBtn">Next →</button>
-                    <div class="calendar-view-selector">
-                        <button class="calendar-view-btn" data-view="today">Today</button>
-                        <button class="calendar-view-btn active" data-view="week">Week</button>
-                        <button class="calendar-view-btn" data-view="month">Month</button>
-                    </div>
+                    <button class="btn btn-secondary" id="nextBtn">Next ›</button>
                 </div>
-                <h2 id="calendarTitle" style="color: var(--gray-900); font-size: 1.8rem;"></h2>
+                
+                <h2 class="calendar-title" id="calendarTitle">Loading...</h2>
+                
                 <div style="display: flex; gap: 1rem; align-items: center;">
-                    <!-- Only show to admin -->
-                    <button class="btn btn-primary admin-only" id="newCalendarBookingBtn">➕ New Booking</button>
-                    <!-- Show permission info to viewers -->
-                    <div class="viewer-only" style="background: var(--warning-500); color: white; padding: 0.5rem 1rem; border-radius: var(--border-radius); font-size: 0.8rem;">
-                        👁️ Read-Only Mode
+                    <div class="view-selector">
+                        <button class="view-btn" data-view="week">Week</button>
+                        <button class="view-btn active" data-view="month">Month</button>
                     </div>
+                    <button class="btn btn-primary admin-only staff-only" id="newBookingBtn">➕ New Booking</button>
                 </div>
             </div>
             
             <div class="calendar-container">
-                <div class="calendar-wrapper">
-                    <div id="currentTimeIndicator" class="current-time-indicator"></div>
-                    <div id="calendar" class="calendar-grid">
-                        <div class="loader">Loading Calendar...</div>
+                <div id="calendarContent" class="calendar-grid">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading calendar...
                     </div>
                 </div>
-            </div>
-            
-            <!-- Viewer instruction message -->
-            <div class="permission-message viewer-only">
-                <div class="permission-message-icon">📅</div>
-                <h3 style="margin-bottom: 0.5rem; color: var(--gray-700);">Calendar View</h3>
-                <p>You can view all meeting schedules and room availability. Only administrators can create, modify, or delete bookings.</p>
             </div>
         </div>
 
-        <!-- Bookings Management View - Admin Only -->
-        <div id="bookingsView" class="view hidden admin-only">
+        <!-- Bookings Page -->
+        <div id="bookingsPage" class="page hidden admin-only staff-only">
             <div class="card">
                 <div class="card-header">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 class="card-title">📋 HSPSD Bookings Management</h2>
-                        <button class="btn btn-primary" id="newBookingBtn">➕ New Booking</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 class="card-title">📋 <span id="bookingsTitle">My Bookings</span></h2>
+                        <button class="btn btn-primary" onclick="showBookingModal()">➕ New Booking</button>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div style="overflow-x: auto;">
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-container">
                         <table class="table">
                             <thead>
                                 <tr>
@@ -350,7 +969,12 @@
                                 </tr>
                             </thead>
                             <tbody id="bookingsTable">
-                                <tr><td colspan="6" class="loader">Loading Bookings...</td></tr>
+                                <tr>
+                                    <td colspan="6" class="loading">
+                                        <div class="spinner"></div>
+                                        Loading bookings...
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -359,72 +983,99 @@
         </div>
     </div>
 
-    <!-- Admin Only Modals -->
-    <div id="bookingModal" class="modal admin-only">
+    <!-- Staff Login Modal -->
+    <div id="staffLoginModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="bookingModalTitle">New Booking</h2>
-                <button class="modal-close" id="closeBookingModalBtn">&times;</button>
+                <h3 class="modal-title">👥 Staff Login</h3>
+                <button class="modal-close" onclick="closeModal('staffLoginModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="staffLoginForm">
+                    <div class="form-group">
+                        <label class="form-label">📧 ICDDRB Email</label>
+                        <input type="email" class="form-input" id="staffEmail" placeholder="your.name@icddrb.org" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🆔 Employee ID</label>
+                        <input type="password" class="form-input" id="staffId" placeholder="Enter your Employee ID" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;" id="staffSubmitBtn">
+                        🚀 Login as Staff
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔐 Admin Login</h3>
+                <button class="modal-close" onclick="closeModal('adminLoginModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label class="form-label">👨‍💼 Username</label>
+                        <input type="text" class="form-input" id="adminUsername" value="cchps@icddrb" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🔒 Password</label>
+                        <input type="password" class="form-input" id="adminPassword" value="987654321" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;" id="adminSubmitBtn">
+                        🔐 Login as Admin
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal admin-only staff-only">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="bookingModalTitle">➕ New Booking</h3>
+                <button class="modal-close" onclick="closeModal('bookingModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="bookingForm">
                     <input type="hidden" id="bookingId">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label">Meeting Room*</label>
-                            <select id="bookingRoom" class="form-select" required></select>
+                            <label class="form-label">🏢 Room</label>
+                            <select class="form-select" id="bookingRoom" required></select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Date*</label>
-                            <input type="date" id="bookingDate" class="form-input" required>
+                            <label class="form-label">📅 Date</label>
+                            <input type="date" class="form-input" id="bookingDate" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Start Time*</label>
-                            <input type="time" id="bookingStart" class="form-input" step="1800" required>
+                            <label class="form-label">⏰ Start Time</label>
+                            <input type="time" class="form-input" id="bookingStartTime" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">End Time*</label>
-                            <input type="time" id="bookingEnd" class="form-input" step="1800" required>
-                        </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label class="form-label">Meeting Subject*</label>
-                            <input type="text" id="bookingSubject" class="form-input" placeholder="Enter meeting subject..." required>
-                        </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label class="form-label">Organizer</label>
-                            <select id="bookingOrganizer" class="form-select"></select>
+                            <label class="form-label">⏱️ End Time</label>
+                            <input type="time" class="form-input" id="bookingEndTime" required>
                         </div>
                     </div>
-                    <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
-                        <button type="submit" class="btn btn-primary" id="bookingSubmitBtn">Create Booking</button>
-                        <button type="button" class="btn" id="cancelBookingBtn">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div id="loginModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header">
-                <h2 class="modal-title">🔐 HSPSD Admin Login</h2>
-                <button class="modal-close" id="closeLoginModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="loginForm">
                     <div class="form-group">
-                        <label class="form-label">Username</label>
-                        <input type="text" id="loginUsername" class="form-input" required value="cchps@icddrb" placeholder="Enter admin username">
+                        <label class="form-label">📝 Subject</label>
+                        <input type="text" class="form-input" id="bookingSubject" placeholder="Meeting subject" required>
                     </div>
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label class="form-label">Password</label>
-                        <input type="password" id="loginPassword" class="form-input" required value="987654321" placeholder="Enter admin password">
+                    <div class="form-group">
+                        <label class="form-label">👤 Organizer</label>
+                        <input type="text" class="form-input" id="bookingOrganizer" placeholder="Meeting organizer">
                     </div>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;" id="loginSubmitBtn">
-                        <span id="loginBtnText">Login as Admin</span>
-                    </button>
-                    <div style="margin-top: 1rem; text-align: center; font-size: 0.8rem; color: var(--gray-500);">
-                        Only HSPSD administrators can create and manage bookings
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;" id="bookingSubmitBtn">
+                            💾 Save Booking
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('bookingModal')">
+                            ❌ Cancel
+                        </button>
                     </div>
                 </form>
             </div>
@@ -441,7 +1092,10 @@
             doc, 
             setDoc, 
             deleteDoc, 
-            serverTimestamp
+            serverTimestamp,
+            query,
+            where,
+            updateDoc
         } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // Firebase configuration
@@ -458,132 +1112,154 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // App state
-        let currentUser = { role: 'viewer' }; // Default to viewer
-        let allBookings = []; 
-        let calendarViewDate = new Date();
-        let calendarViewMode = 'week';
-        let bookingsUnsubscribe = null;
-        let isOnline = true;
-        
-        // App configuration
-        const officeConfig = { startTime: '08:30', endTime: '17:00' };
-        
-        // Updated HSPSD Meeting Rooms
+        // Employee Database
+        const employees = [
+            { id: "N00001", name: "Dr. Manzoor Ahmed Hanifi", jobTitle: "Senior Scientist", email: "hanifi@icddrb.org", avatar: "MH" },
+            { id: "N13498", name: "Dr. Susmita Das", jobTitle: "Assistant Scientist", email: "susmitadas@icddrb.org", avatar: "SD" },
+            { id: "N05993", name: "Probir Kumar Ghosh", jobTitle: "Assistant Scientist", email: "probir@icddrb.org", avatar: "PG" },
+            { id: "N19850", name: "Md. Al Amin", jobTitle: "Research Investigator", email: "md.amin2@icddrb.org", avatar: "AA" },
+            { id: "N17724", name: "Arefin Mizan", jobTitle: "Senior Research Officer", email: "arefin.mizan@icddrb.org", avatar: "AM" },
+            { id: "D20508", name: "Al Jubaer", jobTitle: "Senior Research Officer", email: "DW.AL.JUBAER@icddrb.org", avatar: "AJ" },
+            { id: "N09766", name: "Mohammad Shohel Rana", jobTitle: "Senior Administrative Officer", email: "shohel.rana@icddrb.org", avatar: "SR" },
+            { id: "N12173", name: "Dr. Rifat Ara", jobTitle: "Research Investigator", email: "rifat.ara@icddrb.org", avatar: "RA" },
+            { id: "N16888", name: "Md. Sharoardy Sagar", jobTitle: "Senior Research Officer", email: "SHAROARDY.SAGAR@icddrb.org", avatar: "SS" },
+            { id: "N15218", name: "Md. Mehedi Hasan", jobTitle: "Senior Research Officer", email: "mehedi.hasan8@icddrb.org", avatar: "MH" },
+            { id: "N18765", name: "Nadira Sultana", jobTitle: "Senior Coordination Officer", email: "nadira.sultana@icddrb.org", avatar: "NS" },
+            { id: "N20149", name: "Dr. Dewan Tasnia Azad", jobTitle: "Project Research Physician", email: "DEWAN.AZAD@icddrb.org", avatar: "DA" },
+            { id: "N00002", name: "Mohammad Hanif Miah", jobTitle: "Support Staff", email: "hanif@icddrb.org", avatar: "HM" }
+        ];
+
+        // Rooms
         const rooms = [
             { 
                 id: 1, 
                 name: 'Meeting Room 1 (HSPSD)', 
                 shortName: 'Meeting Room 1',
-                color: 'room1', 
                 capacity: 14,
-                description: 'Main conference room for larger meetings and presentations'
+                description: 'Main conference room with projector and video conferencing'
             }, 
             { 
                 id: 2, 
                 name: 'Mini Meeting Room (HSPSD)', 
                 shortName: 'Mini Meeting Room',
-                color: 'room2', 
                 capacity: 8,
-                description: 'Compact room for smaller team meetings and discussions'
+                description: 'Compact room ideal for team meetings and discussions'
             }
         ];
-        
-        const users = ['Nadira', 'Admin', 'Dr. Ahmed', 'Sarah Khan', 'Dr. Rahman', 'HSPSD Team', 'Guest'];
 
-        // Utility functions
-        const getById = id => document.getElementById(id);
-        const formatDate = dateObj => dateObj.toISOString().split('T')[0];
-        const formatTime = timeStr => {
+        // App State
+        let currentUser = { role: 'viewer', name: '', id: '', email: '', avatar: '👤' };
+        let allBookings = [];
+        let currentView = 'dashboard';
+        let calendarDate = new Date();
+        let calendarViewMode = 'month';
+
+        // Utility Functions
+        const formatDate = (date) => date.toISOString().split('T')[0];
+        const formatTime = (timeStr) => {
             const [hours, minutes] = timeStr.split(':');
             const hour = parseInt(hours);
             const ampm = hour >= 12 ? 'PM' : 'AM';
             const displayHour = hour % 12 || 12;
             return `${displayHour}:${minutes} ${ampm}`;
         };
-        
-        // Time utilities
-        function parseTime(timeStr) {
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours * 60 + minutes;
-        }
-        
-        function formatTimeFromMinutes(minutes) {
-            const hours = Math.floor(minutes / 60);
-            const mins = minutes % 60;
-            return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-        }
-        
-        function isWorkingDay(date) {
-            return ![5, 6].includes(date.getDay()); // 5 = Friday, 6 = Saturday
-        }
-        
+
         // Show notification
         function showNotification(message, type = 'success') {
-            const el = document.createElement('div');
-            el.className = `notification ${type}`;
-            el.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span>${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌'}</span>
-                    <span>${message}</span>
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="font-weight: 700; margin-bottom: 0.25rem;">
+                    ${type === 'success' ? '✅ Success' : type === 'error' ? '❌ Error' : '⚠️ Warning'}
                 </div>
+                <div>${message}</div>
             `;
-            document.body.appendChild(el);
-            setTimeout(() => el.classList.add('show'), 10);
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
             setTimeout(() => {
-                el.classList.remove('show');
-                setTimeout(() => el.remove(), 500);
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
             }, 4000);
         }
 
-        // Check user permissions
-        function checkPermission(action) {
-            if (currentUser.role !== 'admin') {
-                showNotification('🔒 Admin access required to ' + action, 'warning');
-                return false;
-            }
-            return true;
+        // Modal functions
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
         }
 
-        // Update all views
-        function renderAllViews() {
-            renderDashboard();
-            renderCalendar();
-            if (currentUser.role === 'admin') {
-                renderBookingsTable();
-            }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
         }
 
-        // Show selected view with permission check
-        function showView(viewName) {
-            if (viewName === 'bookings' && currentUser.role !== 'admin') {
-                showNotification('🔒 Admin access required to manage bookings.', 'warning');
-                return;
+        window.closeModal = closeModal;
+
+        // Show page
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-view="${pageId.replace('Page', '')}"]`).classList.add('active');
+            
+            currentView = pageId.replace('Page', '');
+        }
+
+        // Update user interface
+        function updateUserInterface() {
+            document.body.className = `${currentUser.role}-user`;
+            
+            const userRole = document.getElementById('userRole');
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (currentUser.role === 'viewer') {
+                userRole.textContent = 'Viewer Mode';
+                userName.textContent = 'Read-only access';
+                userAvatar.textContent = '👁️';
+            } else {
+                userRole.textContent = currentUser.role === 'admin' ? 'Administrator' : 'Staff Member';
+                userName.textContent = currentUser.name;
+                userAvatar.textContent = currentUser.avatar;
             }
             
-            document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.id !== `${viewName}View`));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.view === viewName));
-            
-            if (viewName === 'calendar') {
-                setTimeout(renderCalendar, 100);
+            // Update bookings title
+            const bookingsTitle = document.getElementById('bookingsTitle');
+            if (bookingsTitle) {
+                bookingsTitle.textContent = currentUser.role === 'admin' ? 'All Bookings' : 'My Bookings';
             }
         }
 
-        // Render dashboard (available to all users)
+        // Render dashboard
         function renderDashboard() {
             const today = formatDate(new Date());
-            const todayBookingsCount = allBookings.filter(b => b.date === today).length;
-            getById('todayBookings').textContent = todayBookingsCount;
+            const todayBookings = allBookings.filter(b => b.date === today);
             
-            const systemStatus = getById('systemStatus');
-            systemStatus.textContent = isOnline ? 'Live' : 'Offline';
-            systemStatus.style.color = isOnline ? 'var(--success-500)' : 'var(--danger-500)';
+            document.getElementById('todayBookings').textContent = todayBookings.length;
+            document.getElementById('activeBookings').textContent = allBookings.length;
             
-            getById('roomGrid').innerHTML = rooms.map(room => {
-                const now = new Date();
-                const currentTime = now.toTimeString().slice(0, 5);
-                const currentDate = formatDate(now);
-                
+            if (currentUser.role !== 'viewer') {
+                const myBookings = currentUser.role === 'admin' 
+                    ? allBookings 
+                    : allBookings.filter(b => b.bookedBy === currentUser.id);
+                document.getElementById('myBookings').textContent = myBookings.length;
+            }
+            
+            renderRooms();
+        }
+
+        // Render rooms
+        function renderRooms() {
+            const roomsGrid = document.getElementById('roomsGrid');
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5);
+            const currentDate = formatDate(now);
+            
+            roomsGrid.innerHTML = rooms.map(room => {
                 const currentBooking = allBookings.find(b => 
                     b.roomId === room.id && 
                     b.date === currentDate && 
@@ -599,430 +1275,306 @@
                     )
                     .sort((a,b) => a.startTime.localeCompare(b.startTime))[0];
                 
-                let status, statusClass, info;
+                let status = 'available';
+                let statusText = 'Available';
+                let meetingInfo = '';
                 
-                if (currentBooking) { 
-                    status = 'Occupied'; 
-                    statusClass = 'status-occupied'; 
-                    info = `<strong>🔴 ${currentBooking.subject}</strong><br>
-                           ⏰ Until ${formatTime(currentBooking.endTime)}`;
-                    if (currentBooking.organizer) {
-                        info += `<br>👤 ${currentBooking.organizer}`;
-                    }
-                } else if (nextBooking) { 
-                    status = 'Available'; 
-                    statusClass = 'status-upcoming'; 
-                    info = `<strong>🟡 Next: ${nextBooking.subject}</strong><br>
-                           ⏰ Starts ${formatTime(nextBooking.startTime)}`;
-                    if (nextBooking.organizer) {
-                        info += `<br>👤 ${nextBooking.organizer}`;
-                    }
-                } else { 
-                    status = 'Available'; 
-                    statusClass = 'status-available';
-                    info = '🟢 <strong>Free for the rest of the day</strong>';
+                if (currentBooking) {
+                    status = 'occupied';
+                    statusText = 'Occupied';
+                    const employee = employees.find(e => e.id === currentBooking.bookedBy);
+                    meetingInfo = `
+                        <div class="meeting-info">
+                            <div style="font-weight: 700; margin-bottom: 0.5rem;">${currentBooking.subject}</div>
+                            <div style="color: var(--gray-600); font-size: 0.9rem;">
+                                ⏰ ${formatTime(currentBooking.startTime)} - ${formatTime(currentBooking.endTime)}<br>
+                                👤 ${currentBooking.organizer || 'No organizer'}<br>
+                                🔖 ${employee ? employee.name : currentBooking.bookedBy}
+                            </div>
+                        </div>
+                    `;
+                } else if (nextBooking) {
+                    status = 'upcoming';
+                    statusText = 'Next Meeting';
+                    const employee = employees.find(e => e.id === nextBooking.bookedBy);
+                    meetingInfo = `
+                        <div class="meeting-info">
+                            <div style="font-weight: 700; margin-bottom: 0.5rem;">${nextBooking.subject}</div>
+                            <div style="color: var(--gray-600); font-size: 0.9rem;">
+                                ⏰ ${formatTime(nextBooking.startTime)} - ${formatTime(nextBooking.endTime)}<br>
+                                👤 ${nextBooking.organizer || 'No organizer'}<br>
+                                🔖 ${employee ? employee.name : nextBooking.bookedBy}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    meetingInfo = `
+                        <div class="meeting-info">
+                            <div style="font-weight: 700; color: var(--success);">🟢 Free for the day</div>
+                            <div style="color: var(--gray-600); font-size: 0.9rem;">No meetings scheduled</div>
+                        </div>
+                    `;
                 }
                 
-                return `<div class="card room-card ${statusClass}">
-                    <div class="room-header">
-                        <div class="room-info-section">
-                            <div class="room-name">${room.name}</div>
-                            <div class="room-subtitle">${room.description}</div>
-                            <div class="room-capacity">👥 ${room.capacity} people capacity</div>
+                return `
+                    <div class="room-card">
+                        <div class="room-header">
+                            <div class="room-info">
+                                <h3>${room.name}</h3>
+                                <div class="room-meta">👥 ${room.capacity} people • ${room.description}</div>
+                            </div>
+                            <div class="room-status status-${status}">
+                                <div class="status-dot"></div>
+                                <span>${statusText}</span>
+                            </div>
                         </div>
-                        <div class="room-status-section">
-                            <div class="room-status-indicator"></div>
-                            <span style="color: ${statusClass === 'status-available' ? 'var(--success-500)' : statusClass === 'status-occupied' ? 'var(--danger-500)' : 'var(--warning-500)'};">${status}</span>
+                        <div class="room-details">
+                            ${meetingInfo}
                         </div>
-                    </div>
-                    <div class="room-info">${info}</div>
-                    ${currentUser.role === 'admin' ? 
-                        `<div style="margin-top: 1rem;">
-                            <button class="btn btn-sm btn-primary" onclick="window.quickBookRoom(${room.id})">
-                                📅 Quick Book
-                            </button>
-                        </div>` : 
-                        `<div style="margin-top: 1rem; padding: 0.5rem; background: var(--gray-50); border-radius: 6px; font-size: 0.8rem; color: var(--gray-500);">
-                            👁️ View only - Admin required to book
-                        </div>`
-                    }
-                </div>`;
-            }).join('');
-        }
-        
-        // Main calendar rendering function (read-only for viewers)
-        function renderCalendar() {
-            updateCalendarTitle();
-            
-            switch (calendarViewMode) {
-                case 'today':
-                    renderTodayView();
-                    break;
-                case 'week':
-                    renderWeekView();
-                    break;
-                case 'month':
-                    renderMonthView();
-                    break;
-            }
-            
-            setTimeout(updateCurrentTimeIndicator, 100);
-        }
-        
-        // Update calendar title
-        function updateCalendarTitle() {
-            const titleEl = getById('calendarTitle');
-            const date = new Date(calendarViewDate);
-            
-            switch (calendarViewMode) {
-                case 'today':
-                    titleEl.textContent = date.toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                    });
-                    break;
-                case 'week':
-                    const weekStart = new Date(date);
-                    weekStart.setDate(date.getDate() - date.getDay());
-                    const weekEnd = new Date(weekStart);
-                    weekEnd.setDate(weekStart.getDate() + 6);
-                    titleEl.textContent = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-                    break;
-                case 'month':
-                    titleEl.textContent = date.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long' 
-                    });
-                    break;
-            }
-        }
-        
-        // Render Today View
-        function renderTodayView() {
-            const calendar = getById('calendar');
-            const today = new Date(calendarViewDate);
-            const dateStr = formatDate(today);
-            
-            if (!isWorkingDay(today)) {
-                calendar.innerHTML = `
-                    <div class="today-view">
-                        <div class="today-header">🚫 ${today.toLocaleDateString('en-US', { weekday: 'long' })} - Non-working day</div>
+                        ${currentUser.role !== 'viewer' ? `
+                            <div class="room-actions">
+                                <button class="btn btn-primary btn-sm" onclick="quickBook(${room.id})">📅 Quick Book</button>
+                                <button class="btn btn-secondary btn-sm" onclick="viewSchedule(${room.id})">📊 Schedule</button>
+                            </div>
+                        ` : `
+                            <div class="room-actions">
+                                <button class="btn btn-outline btn-sm" onclick="document.getElementById('staffLoginBtn').click()">👥 Login to Book</button>
+                            </div>
+                        `}
                     </div>
                 `;
+            }).join('');
+        }
+
+        // Quick booking
+        window.quickBook = function(roomId) {
+            if (currentUser.role === 'viewer') {
+                showNotification('Please login to book meetings', 'warning');
                 return;
             }
             
-            calendar.className = 'today-view';
+            const now = new Date();
+            const startHour = Math.max(now.getHours() + 1, 9);
+            const endHour = Math.min(startHour + 1, 17);
             
-            let html = `<div class="today-header">
-                📅 ${today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-            </div>`;
+            document.getElementById('bookingRoom').value = roomId;
+            document.getElementById('bookingDate').value = formatDate(now);
+            document.getElementById('bookingStartTime').value = `${String(startHour).padStart(2, '0')}:00`;
+            document.getElementById('bookingEndTime').value = `${String(endHour).padStart(2, '0')}:00`;
+            document.getElementById('bookingOrganizer').value = currentUser.name || '';
             
-            html += `<div class="time-header">Time</div>`;
-            html += `<div class="day-column" data-date="${dateStr}">`;
+            showModal('bookingModal');
+        };
+
+        // View schedule
+        window.viewSchedule = function(roomId) {
+            showPage('calendarPage');
+            renderCalendar();
+        };
+
+        // Render calendar
+        function renderCalendar() {
+            const title = document.getElementById('calendarTitle');
+            const content = document.getElementById('calendarContent');
             
-            const startTime = parseTime(officeConfig.startTime);
-            const endTime = parseTime(officeConfig.endTime);
-            
-            for (let time = startTime; time < endTime; time += 30) {
-                const timeStr = formatTimeFromMinutes(time);
-                const isHourMark = time % 60 === 0;
+            if (calendarViewMode === 'month') {
+                title.textContent = calendarDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long' 
+                });
+                renderMonthView(content);
+            } else {
+                const weekStart = new Date(calendarDate);
+                weekStart.setDate(calendarDate.getDate() - calendarDate.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
                 
-                if (time % 60 === 0) {
-                    html += `<div class="time-slot ${isHourMark ? 'hour-mark' : ''}">${formatTime(timeStr)}</div>`;
-                }
-                
-                // Only add click handlers for admin users
-                const clickHandler = currentUser.role === 'admin' ? `onclick="handleTimeSlotClick('${dateStr}', '${timeStr}')"` : '';
-                html += `<div class="time-cell ${isHourMark ? 'hour-mark' : ''} selectable" 
-                             data-date="${dateStr}" 
-                             data-time="${timeStr}"
-                             ${clickHandler}></div>`;
+                title.textContent = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                renderWeekView(content);
             }
-            
-            html += `</div>`;
-            calendar.innerHTML = html;
-            
-            setTimeout(() => renderBookingsForDateRange([today]), 50);
         }
-        
-        // Render Week View
-        function renderWeekView() {
-            const calendar = getById('calendar');
-            const weekStart = new Date(calendarViewDate);
-            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-            
-            const weekDates = Array.from({length: 7}, (_, i) => {
-                const date = new Date(weekStart);
-                date.setDate(date.getDate() + i);
-                return date;
-            });
-            
-            calendar.className = 'weekly-view';
-            
-            let html = `<div class="time-header">Time</div>`;
-            html += weekDates.map(d => 
-                `<div class="day-header ${formatDate(d) === formatDate(new Date()) ? 'today' : ''}" data-date="${formatDate(d)}">
-                    <div class="day-header-day">${d.toLocaleDateString('en-US', {weekday: 'short'}).toUpperCase()}</div>
-                    <div class="day-header-date">${d.getDate()}</div>
-                </div>`
-            ).join('');
-            
-            const startTime = parseTime(officeConfig.startTime);
-            const endTime = parseTime(officeConfig.endTime);
-            
-            for (let time = startTime; time < endTime; time += 30) {
-                const timeStr = formatTimeFromMinutes(time);
-                const isHourMark = time % 60 === 0;
-                
-                if (isHourMark) {
-                    html += `<div class="time-slot hour-mark">${formatTime(timeStr)}</div>`;
-                } else {
-                    html += `<div class="time-slot"></div>`;
-                }
-                
-                html += weekDates.map(date => {
-                    const dateStr = formatDate(date);
-                    const isWorkDay = isWorkingDay(date);
-                    
-                    // Only add click handlers for admin users
-                    const clickHandler = (isWorkDay && currentUser.role === 'admin') ? `onclick="handleTimeSlotClick('${dateStr}', '${timeStr}')"` : '';
-                    
-                    return `<div class="time-cell ${isHourMark ? 'hour-mark' : ''} ${!isWorkDay ? 'off-day' : 'selectable'}" 
-                                 data-date="${dateStr}" 
-                                 data-time="${timeStr}"
-                                 ${clickHandler}></div>`;
-                }).join('');
-            }
-            
-            calendar.innerHTML = html;
-            setTimeout(() => renderBookingsForDateRange(weekDates), 50);
-        }
-        
-        // Render Month View
-        function renderMonthView() {
-            const calendar = getById('calendar');
-            const year = calendarViewDate.getFullYear();
-            const month = calendarViewDate.getMonth();
-            
+
+        // Render month view
+        function renderMonthView(container) {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDate = new Date(firstDay);
             startDate.setDate(startDate.getDate() - startDate.getDay());
             
-            const dates = [];
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            let html = '<div class="month-grid">';
+            
+            // Headers
+            days.forEach(day => {
+                html += `<div class="day-header">${day}</div>`;
+            });
+            
+            // Days
             for (let i = 0; i < 42; i++) {
                 const date = new Date(startDate);
                 date.setDate(startDate.getDate() + i);
-                dates.push(date);
-            }
-            
-            calendar.className = 'monthly-view';
-            
-            let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-                .map(day => `<div class="month-day-header">${day}</div>`)
-                .join('');
-            
-            html += dates.map(date => {
                 const dateStr = formatDate(date);
                 const isCurrentMonth = date.getMonth() === month;
                 const isToday = dateStr === formatDate(new Date());
                 const dayBookings = allBookings.filter(b => b.date === dateStr);
                 
-                const bookingsHtml = dayBookings.slice(0, 3).map(booking => {
-                    const room = rooms.find(r => r.id === booking.roomId);
-                    // Only add click handler for admin users
-                    const clickHandler = currentUser.role === 'admin' ? `onclick="window.showBookingModal('${booking.id}')"` : '';
-                    return `<div class="month-booking ${room.color}" 
-                                 ${clickHandler}
-                                 title="${booking.subject} - ${formatTime(booking.startTime)} (${room.shortName}) ${currentUser.role === 'admin' ? '- Click to edit' : '- Read-only'}">
-                        ${booking.subject}
-                    </div>`;
-                }).join('');
-                
-                const moreBookings = dayBookings.length > 3 ? 
-                    `<div style="font-size: 0.7rem; color: var(--gray-500); margin-top: 0.25rem;">+${dayBookings.length - 3} more</div>` : '';
-                
-                // Only add click handler for admin users
-                const dayClickHandler = currentUser.role === 'admin' ? `onclick="handleDayClick('${dateStr}')"` : '';
-                
-                return `<div class="month-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" 
-                             data-date="${dateStr}"
-                             ${dayClickHandler}
-                             title="${currentUser.role === 'admin' ? 'Click to view day details' : 'Read-only view'}">
-                    <div class="month-day-number">${date.getDate()}</div>
-                    ${bookingsHtml}
-                    ${moreBookings}
-                </div>`;
-            }).join('');
+                html += `
+                    <div class="month-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" 
+                         onclick="selectDate('${dateStr}')">
+                        <div style="font-weight: 700; margin-bottom: 0.5rem;">${date.getDate()}</div>
+                        ${dayBookings.slice(0, 3).map(booking => {
+                            const room = rooms.find(r => r.id === booking.roomId);
+                            return `<div class="booking-event" title="${booking.subject}">${booking.subject.substring(0, 15)}...</div>`;
+                        }).join('')}
+                        ${dayBookings.length > 3 ? `<div style="font-size: 0.7rem; color: var(--gray-500);">+${dayBookings.length - 3} more</div>` : ''}
+                    </div>
+                `;
+            }
             
-            calendar.innerHTML = html;
+            html += '</div>';
+            container.innerHTML = html;
         }
-        
-        // Render bookings for specific date range
-        function renderBookingsForDateRange(dates) {
-            const calendar = getById('calendar');
-            const startTime = parseTime(officeConfig.startTime);
-            const slotHeight = 60;
+
+        // Render week view
+        function renderWeekView(container) {
+            const weekStart = new Date(calendarDate);
+            weekStart.setDate(calendarDate.getDate() - calendarDate.getDay());
             
-            allBookings.forEach(booking => {
-                const bookingDate = new Date(booking.date + 'T00:00:00');
-                if (!dates.some(d => formatDate(d) === booking.date)) return;
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const hours = Array.from({length: 17}, (_, i) => i + 8); // 8 AM to 11 PM
+            
+            let html = '<div class="week-grid">';
+            
+            // Time header
+            html += '<div class="time-slot"></div>';
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + i);
+                const isToday = formatDate(date) === formatDate(new Date());
+                html += `
+                    <div class="day-header ${isToday ? 'today' : ''}">
+                        <div>${days[i]}</div>
+                        <div>${date.getDate()}</div>
+                    </div>
+                `;
+            }
+            
+            // Time slots
+            hours.forEach(hour => {
+                html += `<div class="time-slot">${hour}:00</div>`;
                 
-                const dayColumn = calendar.querySelector(`[data-date="${booking.date}"]`);
-                if (!dayColumn || dayColumn.classList.contains('off-day')) return;
-                
-                const bookingStart = parseTime(booking.startTime);
-                const bookingEnd = parseTime(booking.endTime);
-                const duration = bookingEnd - bookingStart;
-                
-                const topPosition = ((bookingStart - startTime) / 30) * slotHeight;
-                const height = Math.max((duration / 30) * slotHeight - 4, 30);
-                
-                const room = rooms.find(r => r.id === booking.roomId);
-                
-                const now = new Date();
-                const currentTime = now.toTimeString().slice(0, 5);
-                const isOngoing = booking.date === formatDate(now) && 
-                                booking.startTime <= currentTime && 
-                                booking.endTime > currentTime;
-                
-                let progressHtml = '';
-                if (isOngoing) {
-                    const elapsed = parseTime(currentTime) - parseTime(booking.startTime);
-                    const progress = Math.min((elapsed / duration) * 100, 100);
-                    progressHtml = `
-                        <div class="booking-progress">
-                            <div class="booking-progress-bar" style="width: ${progress}%"></div>
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(weekStart);
+                    date.setDate(weekStart.getDate() + i);
+                    const dateStr = formatDate(date);
+                    const timeStr = `${String(hour).padStart(2, '0')}:00`;
+                    
+                    const cellBookings = allBookings.filter(b => 
+                        b.date === dateStr && 
+                        b.startTime <= timeStr && 
+                        b.endTime > timeStr
+                    );
+                    
+                    html += `
+                        <div class="calendar-cell" onclick="selectTimeSlot('${dateStr}', '${timeStr}')">
+                            ${cellBookings.map(booking => 
+                                `<div class="booking-event">${booking.subject}</div>`
+                            ).join('')}
                         </div>
                     `;
                 }
-                
-                const bookingBlock = document.createElement('div');
-                bookingBlock.className = `booking-block ${room.color}`;
-                bookingBlock.style.cssText = `
-                    position: absolute;
-                    top: ${topPosition}px; 
-                    height: ${height}px;
-                    left: 4px;
-                    right: 4px;
-                    z-index: 10;
-                `;
-                
-                bookingBlock.innerHTML = `
-                    <div class="booking-subject">${booking.subject}</div>
-                    <div class="booking-organizer">👤 ${booking.organizer || 'No organizer'}</div>
-                    <div class="booking-room">🏢 ${room.shortName}</div>
-                    <div class="booking-time">⏰ ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</div>
-                    ${progressHtml}
-                `;
-                
-                // Only add click functionality for admin users
-                if (currentUser.role === 'admin') {
-                    bookingBlock.onclick = (e) => {
-                        e.stopPropagation();
-                        showBookingModal(booking.id);
-                    };
-                    bookingBlock.title = `Click to edit: ${booking.subject}`;
-                } else {
-                    bookingBlock.title = `${booking.subject}\n${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}\nRoom: ${room.name}\nOrganizer: ${booking.organizer || 'None'}\n(Read-only view)`;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Select date
+        window.selectDate = function(dateStr) {
+            if (currentUser.role === 'viewer') {
+                showNotification('Please login to book meetings', 'warning');
+                return;
+            }
+            
+            document.getElementById('bookingDate').value = dateStr;
+            showModal('bookingModal');
+        };
+
+        // Select time slot
+        window.selectTimeSlot = function(dateStr, timeStr) {
+            if (currentUser.role === 'viewer') {
+                showNotification('Please login to book meetings', 'warning');
+                return;
+            }
+            
+            const endHour = parseInt(timeStr.split(':')[0]) + 1;
+            const endTime = `${String(endHour).padStart(2, '0')}:00`;
+            
+            document.getElementById('bookingDate').value = dateStr;
+            document.getElementById('bookingStartTime').value = timeStr;
+            document.getElementById('bookingEndTime').value = endTime;
+            showModal('bookingModal');
+        };
+
+        // Show booking modal
+        window.showBookingModal = function(bookingId = null) {
+            if (currentUser.role === 'viewer') {
+                showNotification('Please login to book meetings', 'warning');
+                return;
+            }
+            
+            const form = document.getElementById('bookingForm');
+            form.reset();
+            
+            document.getElementById('bookingModalTitle').textContent = bookingId ? 'Edit Booking' : 'New Booking';
+            document.getElementById('bookingSubmitBtn').textContent = bookingId ? 'Update Booking' : 'Save Booking';
+            document.getElementById('bookingId').value = bookingId || '';
+            
+            // Set default values
+            document.getElementById('bookingDate').value = formatDate(new Date());
+            document.getElementById('bookingOrganizer').value = currentUser.name || '';
+            
+            // Set min date to today
+            document.getElementById('bookingDate').min = formatDate(new Date());
+            
+            if (bookingId) {
+                const booking = allBookings.find(b => b.id === bookingId);
+                if (booking) {
+                    document.getElementById('bookingRoom').value = booking.roomId;
+                    document.getElementById('bookingDate').value = booking.date;
+                    document.getElementById('bookingStartTime').value = booking.startTime;
+                    document.getElementById('bookingEndTime').value = booking.endTime;
+                    document.getElementById('bookingSubject').value = booking.subject;
+                    document.getElementById('bookingOrganizer').value = booking.organizer || '';
                 }
-                
-                dayColumn.style.position = 'relative';
-                dayColumn.appendChild(bookingBlock);
-            });
-        }
-        
-        // Update current time indicator
-        function updateCurrentTimeIndicator() {
-            const indicator = getById('currentTimeIndicator');
-            if (!indicator || calendarViewMode === 'month') {
-                if (indicator) indicator.style.display = 'none';
-                return;
             }
             
-            const now = new Date();
-            const currentDate = formatDate(now);
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            const startTime = parseTime(officeConfig.startTime);
-            const endTime = parseTime(officeConfig.endTime);
-            
-            let shouldShow = false;
-            
-            if (calendarViewMode === 'today') {
-                shouldShow = currentDate === formatDate(calendarViewDate);
-            } else if (calendarViewMode === 'week') {
-                const weekStart = new Date(calendarViewDate);
-                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekEnd.getDate() + 6);
-                shouldShow = currentDate >= formatDate(weekStart) && currentDate <= formatDate(weekEnd);
-            }
-            
-            if (!shouldShow || currentTime < startTime || currentTime > endTime) {
-                indicator.style.display = 'none';
-                return;
-            }
-            
-            const slotHeight = 60;
-            const minutesPastStart = currentTime - startTime;
-            const topPosition = (minutesPastStart / 30) * slotHeight;
-            
-            indicator.style.display = 'block';
-            indicator.style.top = `${topPosition}px`;
-            
-            if (calendarViewMode === 'week') {
-                const dayIndex = now.getDay();
-                indicator.style.left = `${100 + (dayIndex * (100 / 7))}px`;
-                indicator.style.width = `${100 / 7}%`;
-            }
-        }
-        
-        // Handle time slot clicks (admin only)
-        window.handleTimeSlotClick = function(date, time) {
-            if (!checkPermission('create bookings')) return;
-            
-            const endTime = formatTimeFromMinutes(parseTime(time) + 60);
-            const conflicts = allBookings.filter(b => 
-                b.date === date && 
-                time < b.endTime && 
-                endTime > b.startTime
-            );
-            
-            if (conflicts.length > 0) {
-                showNotification('This time slot conflicts with existing bookings.', 'error');
-                return;
-            }
-            
-            showBookingModal(null, null, date, time, endTime);
+            showModal('bookingModal');
         };
-        
-        // Handle day clicks in month view (admin only)
-        window.handleDayClick = function(date) {
-            if (!checkPermission('view day details')) return;
-            
-            calendarViewDate = new Date(date + 'T00:00:00');
-            calendarViewMode = 'today';
-            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.view === 'today');
-            });
-            renderCalendar();
-        };
-        
-        // Render bookings table (admin only)
+
+        // Render bookings table
         function renderBookingsTable() {
-            if (currentUser.role !== 'admin') return;
+            const tableBody = document.getElementById('bookingsTable');
             
-            const tableBody = getById('bookingsTable');
+            let filteredBookings = allBookings;
+            if (currentUser.role === 'staff') {
+                filteredBookings = allBookings.filter(b => b.bookedBy === currentUser.id);
+            }
             
-            if (allBookings.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem;">📭 No bookings found.</td></tr>`;
+            if (filteredBookings.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            <div style="color: var(--gray-500);">No bookings found</div>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
             
-            const sortedBookings = [...allBookings].sort((a, b) => {
+            const sortedBookings = [...filteredBookings].sort((a, b) => {
                 const dateA = new Date(`${a.date}T${a.startTime}`);
                 const dateB = new Date(`${b.date}T${b.startTime}`);
                 return dateB - dateA;
@@ -1030,447 +1582,314 @@
             
             tableBody.innerHTML = sortedBookings.map(booking => {
                 const room = rooms.find(r => r.id === booking.roomId);
-                const bookingDateTime = new Date(`${booking.date}T${booking.endTime}`);
-                const now = new Date();
-                const isPast = bookingDateTime < now;
-                const isOngoing = new Date(`${booking.date}T${booking.startTime}`) <= now && bookingDateTime > now;
+                const employee = employees.find(e => e.id === booking.bookedBy);
+                const canEdit = currentUser.role === 'admin' || booking.bookedBy === currentUser.id;
                 
-                let statusBadge;
-                if (isPast) {
-                    statusBadge = '<span style="background: var(--gray-400); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Completed</span>';
-                } else if (isOngoing) {
-                    statusBadge = '<span style="background: var(--danger-500); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Ongoing</span>';
-                } else {
-                    statusBadge = '<span style="background: var(--success-500); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Scheduled</span>';
-                }
+                const bookingDate = new Date(`${booking.date}T${booking.endTime}`);
+                const isPast = bookingDate < new Date();
                 
-                return `<tr style="${isPast ? 'opacity: 0.6;' : ''}">
-                    <td><strong>${booking.subject}</strong></td>
-                    <td>🏢 ${room ? room.name : `Room ${booking.roomId}`}</td>
-                    <td>📅 ${booking.date}<br>⏰ ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</td>
-                    <td>👤 ${booking.organizer || 'No organizer'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-sm" onclick="window.showBookingModal('${booking.id}')" title="Edit booking">✏️</button>
-                            <button class="btn btn-sm btn-danger" onclick="window.deleteBooking('${booking.id}')" title="Delete booking">🗑️</button>
-                        </div>
-                    </td>
-                </tr>`;
+                return `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 700;">${booking.subject}</div>
+                            ${booking.organizer ? `<div style="font-size: 0.8rem; color: var(--gray-600);">👤 ${booking.organizer}</div>` : ''}
+                        </td>
+                        <td>
+                            <div style="font-weight: 600;">${room ? room.shortName : `Room ${booking.roomId}`}</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-600);">👥 ${room ? room.capacity : 'N/A'} people</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600;">${booking.date}</div>
+                            <div style="color: var(--gray-600);">${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</div>
+                        </td>
+                        <td>${booking.organizer || 'Not specified'}</td>
+                        <td>
+                            <span class="btn btn-sm ${isPast ? 'btn-secondary' : 'btn-success'}" style="cursor: default;">
+                                ${isPast ? '✅ Completed' : '📅 Scheduled'}
+                            </span>
+                        </td>
+                        <td>
+                            ${canEdit && !isPast ? `
+                                <button class="btn btn-sm btn-primary" onclick="showBookingModal('${booking.id}')">✏️ Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteBooking('${booking.id}')">🗑️ Delete</button>
+                            ` : `
+                                <span style="color: var(--gray-500); font-size: 0.8rem;">
+                                    ${isPast ? 'Past event' : 'No access'}
+                                </span>
+                            `}
+                        </td>
+                    </tr>
+                `;
             }).join('');
         }
-        
-        // Quick book room (admin only)
-        window.quickBookRoom = function(roomId) {
-            if (!checkPermission('create bookings')) return;
-            
-            const now = new Date();
-            const roundedHour = Math.ceil(now.getHours() + now.getMinutes() / 60);
-            const startTime = `${String(roundedHour).padStart(2, '0')}:00`;
-            const endTime = `${String(roundedHour + 1).padStart(2, '0')}:00`;
-            
-            showBookingModal(null, roomId, formatDate(now), startTime, endTime);
-        };
-        
-        // Show booking modal (admin only)
-        window.showBookingModal = function(bookingId = null, defaultRoomId = null, defaultDate = null, defaultStartTime = null, defaultEndTime = null) {
-            if (!checkPermission('manage bookings')) return;
-            
-            const form = getById('bookingForm');
-            form.reset();
-            
-            const dateInput = getById('bookingDate');
-            dateInput.min = formatDate(new Date());
-            
-            getById('bookingModalTitle').textContent = bookingId ? '✏️ Edit Booking' : '➕ New Booking';
-            getById('bookingSubmitBtn').innerHTML = bookingId ? '💾 Update Booking' : '📅 Create Booking';
-            getById('bookingId').value = bookingId || '';
-            
-            if (bookingId) {
-                const booking = allBookings.find(b => b.id === bookingId);
-                if (booking) {
-                    getById('bookingRoom').value = booking.roomId;
-                    getById('bookingDate').value = booking.date;
-                    getById('bookingStart').value = booking.startTime;
-                    getById('bookingEnd').value = booking.endTime;
-                    getById('bookingSubject').value = booking.subject;
-                    getById('bookingOrganizer').value = booking.organizer || '';
-                }
-            } else {
-                getById('bookingDate').value = defaultDate || formatDate(new Date());
-                
-                const now = new Date();
-                const startTime = defaultStartTime || `${String(Math.max(now.getHours() + 1, 9)).padStart(2, '0')}:00`;
-                const endTime = defaultEndTime || `${String(Math.max(now.getHours() + 2, 10)).padStart(2, '0')}:00`;
-                
-                getById('bookingStart').value = startTime;
-                getById('bookingEnd').value = endTime;
-                getById('bookingRoom').value = defaultRoomId || rooms[0].id;
-                getById('bookingOrganizer').value = 'Admin';
-            }
-            
-            getById('bookingModal').classList.add('show');
-            setTimeout(() => getById('bookingSubject').focus(), 300);
-        };
-        
-        // Check room availability
-        function isRoomAvailable(roomId, date, startTime, endTime, excludeId = null) {
-            const conflicts = allBookings.filter(b => 
-                b.id !== excludeId && 
-                b.roomId === roomId && 
-                b.date === date && 
-                startTime < b.endTime && 
-                endTime > b.startTime
-            );
-            return conflicts.length === 0;
-        }
 
-        // Handle booking form submission (admin only)
-        async function handleSaveBooking(e) {
-            e.preventDefault();
-            
-            if (!checkPermission('save bookings')) return;
-            
-            const submitBtn = getById('bookingSubmitBtn');
-            const id = getById('bookingId').value;
-            
-            const data = {
-                roomId: Number(getById('bookingRoom').value), 
-                date: getById('bookingDate').value,
-                startTime: getById('bookingStart').value, 
-                endTime: getById('bookingEnd').value,
-                subject: getById('bookingSubject').value.trim() || "Untitled Meeting", 
-                organizer: getById('bookingOrganizer').value || 'Admin',
-                lastUpdated: serverTimestamp()
-            };
-            
-            // Validation
-            const selectedDate = new Date(data.date + 'T00:00:00');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            if (selectedDate < today) {
-                return showNotification('Cannot create bookings for past dates.', 'error');
-            }
-            
-            if (!isWorkingDay(selectedDate)) {
-                return showNotification('Bookings only allowed on work days (Sunday-Thursday).', 'error');
-            }
-            
-            if (data.startTime < officeConfig.startTime || data.endTime > officeConfig.endTime) {
-                return showNotification(`Booking must be within office hours (${formatTime(officeConfig.startTime)} - ${formatTime(officeConfig.endTime)}).`, 'error');
-            }
-            
-            if (data.startTime >= data.endTime) {
-                return showNotification('End time must be after start time.', 'error');
-            }
-            
-            const duration = parseTime(data.endTime) - parseTime(data.startTime);
-            if (duration < 30) {
-                return showNotification('Minimum booking duration is 30 minutes.', 'error');
-            }
-            
-            if (!isRoomAvailable(data.roomId, data.date, data.startTime, data.endTime, id)) {
-                return showNotification('This room is already booked for the selected time.', 'error');
-            }
-            
-            submitBtn.disabled = true;
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<div class="spinner"></div> Saving...';
-            
-            try {
-                if (id) {
-                    await setDoc(doc(db, "bookings", id), data);
-                    showNotification('✅ Booking updated successfully!', 'success');
-                } else {
-                    await addDoc(collection(db, "bookings"), data);
-                    showNotification('🎉 Booking created successfully!', 'success');
-                }
-                
-                getById('bookingModal').classList.remove('show');
-            } catch (error) {
-                console.error("Error saving booking:", error);
-                showNotification('❌ Could not save booking. Please try again.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        }
-        
-        // Delete booking (admin only)
+        // Delete booking
         window.deleteBooking = async function(bookingId) {
-            if (!checkPermission('delete bookings')) return;
-            
             const booking = allBookings.find(b => b.id === bookingId);
             if (!booking) return;
             
-            if (!confirm(`Are you sure you want to delete:\n\n"${booking.subject}"\n\nThis action cannot be undone.`)) {
+            if (currentUser.role === 'staff' && booking.bookedBy !== currentUser.id) {
+                showNotification('You can only delete your own bookings', 'error');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete the booking "${booking.subject}"?`)) {
                 return;
             }
             
             try {
                 await deleteDoc(doc(db, "bookings", bookingId));
-                showNotification('🗑️ Booking deleted successfully.', 'success');
+                showNotification('Booking deleted successfully');
             } catch (error) {
-                console.error("Error deleting booking:", error);
-                showNotification('❌ Could not delete booking. Please try again.', 'error');
+                console.error('Error deleting booking:', error);
+                showNotification('Failed to delete booking', 'error');
             }
         };
-        
-        // Handle admin login
-        async function handleLogin(e) {
-            e.preventDefault();
-            
-            const username = getById('loginUsername').value.trim();
-            const password = getById('loginPassword').value;
-            const submitBtn = getById('loginSubmitBtn');
-            
-            if (!username || !password) {
-                return showNotification('Please enter both username and password.', 'error');
-            }
-            
-            submitBtn.disabled = true;
-            getById('loginBtnText').innerHTML = '<div class="spinner"></div> Logging in...';
-            
-            try {
-                if (username === 'cchps@icddrb' && password === '987654321') {
-                    currentUser.role = 'admin';
-                    document.body.classList.add('admin-user');
-                    getById('userRole').textContent = 'Admin';
-                    getById('authBtn').textContent = 'Logout';
-                    
-                    getById('loginModal').classList.remove('show');
-                    showNotification('🎉 Welcome back, HSPSD Admin! You now have full access.', 'success');
-                    renderAllViews();
-                } else {
-                    showNotification('❌ Invalid credentials. Please try again.', 'error');
-                }
-            } catch (error) {
-                console.error("Login error:", error);
-                showNotification('❌ Login failed. Please try again.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                getById('loginBtnText').textContent = 'Login as Admin';
-            }
-        }
 
-        // Handle logout
-        function handleLogout() {
-            if (confirm('Are you sure you want to logout? You will lose admin access.')) {
-                currentUser.role = 'viewer';
-                document.body.classList.remove('admin-user');
-                getById('userRole').textContent = 'Viewer';
-                getById('authBtn').textContent = 'Admin Login';
-                showView('dashboard'); // Redirect to dashboard
-                showNotification('👋 Logged out successfully. You now have read-only access.', 'success');
-            }
-        }
-
-        // Initialize Firebase listeners
-        function initFirebaseListeners() {
-            if (bookingsUnsubscribe) {
-                bookingsUnsubscribe();
-            }
-            
-            bookingsUnsubscribe = onSnapshot(
-                collection(db, "bookings"), 
-                (snapshot) => {
-                    updateConnectionStatus(true);
-                    
-                    allBookings = snapshot.docs.map(doc => ({ 
-                        id: doc.id, 
-                        ...doc.data() 
-                    }));
-                    
-                    renderAllViews();
-                }, 
-                (error) => {
-                    console.error("Firestore error:", error);
-                    updateConnectionStatus(false);
-                    showNotification("🔌 Connection error. Retrying...", "error");
-                    setTimeout(initFirebaseListeners, 5000);
-                }
-            );
-        }
-
-        // Update connection status
-        function updateConnectionStatus(online) {
-            isOnline = online;
-            const statusEl = getById('connectionStatus');
-            const dotEl = document.querySelector('.status-dot');
-            const parentEl = statusEl.parentElement;
-            
-            if (online) {
-                statusEl.textContent = 'Connected';
-                parentEl.classList.remove('offline');
-                parentEl.classList.add('online');
-                dotEl.classList.remove('offline');
-                dotEl.classList.add('online');
-            } else {
-                statusEl.textContent = 'Offline';
-                parentEl.classList.remove('online');
-                parentEl.classList.add('offline');
-                dotEl.classList.remove('online');
-                dotEl.classList.add('offline');
-            }
-        }
-
-        // Initialize the application
-        function init() {
-            // Clock updates
-            const updateClock = () => {
+        // Initialize
+        async function init() {
+            // Clock
+            function updateClock() {
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
                     hour12: true 
                 });
-                getById('liveClock').textContent = timeStr;
-                getById('currentTimeDisplay').textContent = timeStr;
-            };
+                document.getElementById('liveClock').textContent = timeStr;
+            }
             updateClock();
             setInterval(updateClock, 1000);
             
-            // Regular updates
-            setInterval(updateCurrentTimeIndicator, 30000);
-            setInterval(renderDashboard, 60000);
+            // Populate room select
+            const roomSelect = document.getElementById('bookingRoom');
+            roomSelect.innerHTML = rooms.map(room => 
+                `<option value="${room.id}">${room.name} (${room.capacity} people)</option>`
+            ).join('');
             
-            initFirebaseListeners();
+            // Event listeners
+            document.getElementById('staffLoginBtn').addEventListener('click', () => {
+                showModal('staffLoginModal');
+                setTimeout(() => document.getElementById('staffEmail').focus(), 300);
+            });
+            
+            document.getElementById('adminLoginBtn').addEventListener('click', () => {
+                showModal('adminLoginModal');
+                setTimeout(() => document.getElementById('adminUsername').focus(), 300);
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    currentUser = { role: 'viewer', name: '', id: '', email: '', avatar: '👤' };
+                    updateUserInterface();
+                    showPage('dashboardPage');
+                    showNotification('Logged out successfully');
+                }
+            });
             
             // Navigation
-            document.querySelectorAll('.nav-tab').forEach(tab => 
-                tab.addEventListener('click', () => showView(tab.dataset.view))
-            );
-            
-            // Calendar view mode selector
-            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    calendarViewMode = btn.dataset.view;
-                    document.querySelectorAll('.calendar-view-btn').forEach(b => 
-                        b.classList.toggle('active', b === btn));
-                    renderCalendar();
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const view = item.dataset.view;
+                    if (view === 'bookings' && currentUser.role === 'viewer') {
+                        showNotification('Please login to view bookings', 'warning');
+                        return;
+                    }
+                    
+                    showPage(view + 'Page');
+                    
+                    if (view === 'calendar') {
+                        renderCalendar();
+                    } else if (view === 'bookings') {
+                        renderBookingsTable();
+                    }
                 });
             });
             
             // Calendar navigation
-            getById('prevBtn').addEventListener('click', () => {
-                switch (calendarViewMode) {
-                    case 'today':
-                        calendarViewDate.setDate(calendarViewDate.getDate() - 1);
-                        break;
-                    case 'week':
-                        calendarViewDate.setDate(calendarViewDate.getDate() - 7);
-                        break;
-                    case 'month':
-                        calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
-                        break;
-                }
-                renderCalendar();
-            });
-            
-            getById('nextBtn').addEventListener('click', () => {
-                switch (calendarViewMode) {
-                    case 'today':
-                        calendarViewDate.setDate(calendarViewDate.getDate() + 1);
-                        break;
-                    case 'week':
-                        calendarViewDate.setDate(calendarViewDate.getDate() + 7);
-                        break;
-                    case 'month':
-                        calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
-                        break;
-                }
-                renderCalendar();
-            });
-            
-            getById('todayBtn').addEventListener('click', () => {
-                calendarViewDate = new Date();
-                renderCalendar();
-            });
-            
-            // Auth
-            getById('authBtn').addEventListener('click', () => {
-                if (currentUser.role === 'viewer') {
-                    getById('loginModal').classList.add('show');
+            document.getElementById('prevBtn').addEventListener('click', () => {
+                if (calendarViewMode === 'month') {
+                    calendarDate.setMonth(calendarDate.getMonth() - 1);
                 } else {
-                    handleLogout();
+                    calendarDate.setDate(calendarDate.getDate() - 7);
                 }
+                renderCalendar();
             });
             
-            // Modal events
-            [getById('closeLoginModalBtn'), getById('closeBookingModalBtn')].forEach(btn => {
-                if (btn) {
-                    btn.addEventListener('click', (e) => {
-                        e.target.closest('.modal').classList.remove('show');
-                    });
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                if (calendarViewMode === 'month') {
+                    calendarDate.setMonth(calendarDate.getMonth() + 1);
+                } else {
+                    calendarDate.setDate(calendarDate.getDate() + 7);
                 }
+                renderCalendar();
             });
             
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.remove('show');
-                    }
+            document.getElementById('todayBtn').addEventListener('click', () => {
+                calendarDate = new Date();
+                renderCalendar();
+            });
+            
+            // Calendar view selector
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    calendarViewMode = btn.dataset.view;
+                    renderCalendar();
                 });
             });
             
-            // Forms
-            getById('loginForm').addEventListener('submit', handleLogin);
-            
-            // Admin-only form events
-            const bookingForm = getById('bookingForm');
-            if (bookingForm) {
-                bookingForm.addEventListener('submit', handleSaveBooking);
-            }
-            
-            // Admin-only booking buttons
-            const newCalendarBtn = getById('newCalendarBookingBtn');
-            const newBookingBtn = getById('newBookingBtn');
-            const cancelBtn = getById('cancelBookingBtn');
-            
-            if (newCalendarBtn) newCalendarBtn.addEventListener('click', () => checkPermission('create bookings') && showBookingModal());
-            if (newBookingBtn) newBookingBtn.addEventListener('click', () => checkPermission('create bookings') && showBookingModal());
-            if (cancelBtn) cancelBtn.addEventListener('click', () => getById('bookingModal').classList.remove('show'));
-            
-            // Populate selects
-            const populateSelect = (elId, options, placeholder = '') => {
-                const select = getById(elId);
-                if (select) {
-                    select.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') + 
-                        options.map(o => `<option value="${o.value}">${o.text}</option>`).join('');
-                }
-            };
-            
-            populateSelect('bookingRoom', rooms.map(r => ({
-                value: r.id, 
-                text: `🏢 ${r.name} (${r.capacity} people)`
-            })));
-            
-            populateSelect('bookingOrganizer', users.map(u => ({
-                value: u, 
-                text: `👤 ${u}`
-            })), 'Select organizer...');
-            
-            // Keyboard shortcuts (admin only for booking creation)
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey || e.metaKey) {
-                    switch(e.key) {
-                        case 'n':
-                            if (currentUser.role === 'admin') {
-                                e.preventDefault();
-                                showBookingModal();
-                            }
-                            break;
-                        case '1':
-                            e.preventDefault();
-                            showView('dashboard');
-                            break;
-                        case '2':
-                            e.preventDefault();
-                            showView('calendar');
-                            break;
+            // Staff login form
+            document.getElementById('staffLoginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('staffSubmitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Logging in...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const email = document.getElementById('staffEmail').value.trim();
+                    const employeeId = document.getElementById('staffId').value.trim();
+                    
+                    if (!email || !employeeId) {
+                        throw new Error('Please enter both email and employee ID');
                     }
+                    
+                    const employee = employees.find(emp => 
+                        emp.email.toLowerCase() === email.toLowerCase() && emp.id === employeeId
+                    );
+                    
+                    if (employee) {
+                        currentUser = { 
+                            role: 'staff', 
+                            name: employee.name, 
+                            id: employee.id, 
+                            email: employee.email,
+                            avatar: employee.avatar
+                        };
+                        updateUserInterface();
+                        closeModal('staffLoginModal');
+                        showNotification(`Welcome ${employee.name}!`);
+                        renderDashboard();
+                    } else {
+                        throw new Error('Invalid credentials');
+                    }
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                } finally {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
                 }
+            });
+            
+            // Admin login form
+            document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('adminSubmitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Logging in...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const username = document.getElementById('adminUsername').value.trim();
+                    const password = document.getElementById('adminPassword').value;
+                    
+                    if (!username || !password) {
+                        throw new Error('Please enter both username and password');
+                    }
+                    
+                    if (username === 'cchps@icddrb' && password === '987654321') {
+                        currentUser = { 
+                            role: 'admin', 
+                            name: 'System Administrator', 
+                            id: 'ADMIN', 
+                            email: 'cchps@icddrb',
+                            avatar: '👨‍💼'
+                        };
+                        updateUserInterface();
+                        closeModal('adminLoginModal');
+                        showNotification('Welcome Administrator!');
+                        renderDashboard();
+                    } else {
+                        throw new Error('Invalid credentials');
+                    }
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                } finally {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            // Booking form
+            document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('bookingSubmitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Saving...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const id = document.getElementById('bookingId').value;
+                    const data = {
+                        roomId: Number(document.getElementById('bookingRoom').value),
+                        date: document.getElementById('bookingDate').value,
+                        startTime: document.getElementById('bookingStartTime').value,
+                        endTime: document.getElementById('bookingEndTime').value,
+                        subject: document.getElementById('bookingSubject').value.trim(),
+                        organizer: document.getElementById('bookingOrganizer').value.trim(),
+                        bookedBy: currentUser.id,
+                        bookedByName: currentUser.name,
+                        status: currentUser.role === 'admin' ? 'confirmed' : 'pending',
+                        lastUpdated: serverTimestamp()
+                    };
+                    
+                    if (!data.subject) {
+                        throw new Error('Please enter a meeting subject');
+                    }
+                    
+                    if (data.startTime >= data.endTime) {
+                        throw new Error('End time must be after start time');
+                    }
+                    
+                    // Check for conflicts
+                    const conflicts = allBookings.filter(b => 
+                        b.id !== id && 
+                        b.roomId === data.roomId && 
+                        b.date === data.date && 
+                        data.startTime < b.endTime && 
+                        data.endTime > b.startTime
+                    );
+                    
+                    if (conflicts.length > 0) {
+                        throw new Error('This time slot conflicts with existing bookings');
+                    }
+                    
+                    if (id) {
+                        await setDoc(doc(db, "bookings", id), data);
+                        showNotification('Booking updated successfully');
+                    } else {
+                        data.createdAt = serverTimestamp();
+                        await addDoc(collection(db, "bookings"), data);
+                        showNotification('Booking created successfully');
+                    }
+                    
+                    closeModal('bookingModal');
+                } catch (error) {
+                    console.error('Error saving booking:', error);
+                    showNotification(error.message, 'error');
+                } finally {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            // Close modals on escape
+            document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     document.querySelectorAll('.modal.show').forEach(modal => {
                         modal.classList.remove('show');
@@ -1478,22 +1897,41 @@
                 }
             });
             
-            // Start with dashboard (available to all users)
-            showView('dashboard');
+            // Firebase listener
+            onSnapshot(collection(db, "bookings"), (snapshot) => {
+                allBookings = snapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data() 
+                }));
+                
+                renderDashboard();
+                
+                if (currentView === 'calendar') {
+                    renderCalendar();
+                } else if (currentView === 'bookings' && currentUser.role !== 'viewer') {
+                    renderBookingsTable();
+                }
+            }, (error) => {
+                console.error("Firestore error:", error);
+                showNotification("Connection error", "error");
+            });
             
-            // Expose functions globally (with permission checks built-in)
-            window.showBookingModal = showBookingModal;
-            window.deleteBooking = deleteBooking;
-            window.quickBookRoom = quickBookRoom;
-            window.handleTimeSlotClick = handleTimeSlotClick;
-            window.handleDayClick = handleDayClick;
+            // Initial render
+            updateUserInterface();
+            renderDashboard();
             
-            console.log('🚀 HSPSD Meeting Room Dashboard initialized successfully!');
-            console.log(`👁️ Current user role: ${currentUser.role}`);
-            console.log('🏢 Available rooms:', rooms.map(r => `${r.name} (${r.capacity} people)`));
+            console.log('🚀 HSPSD Smart Meeting Hub initialized!');
         }
 
-        // Start the application
+        // Global functions
+        window.showBookingModal = showBookingModal;
+        window.deleteBooking = deleteBooking;
+        window.quickBook = quickBook;
+        window.viewSchedule = viewSchedule;
+        window.selectDate = selectDate;
+        window.selectTimeSlot = selectTimeSlot;
+
+        // Start the app
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
